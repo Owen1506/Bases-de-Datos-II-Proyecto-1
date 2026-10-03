@@ -1,3 +1,5 @@
+import Clientes from './pages/Clientes';
+
 function App() {
   return (
     <>
@@ -6,8 +8,7 @@ function App() {
       </header>
 
       <main className="contenido">
-        <h2>Clientes</h2>
-        <p>Aquí va la página de clientes.</p>
+        <Clientes />
       </main>
     </>
   );
