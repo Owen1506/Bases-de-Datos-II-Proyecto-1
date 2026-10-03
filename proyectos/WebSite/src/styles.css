@@ -24,11 +24,20 @@ body {
   background-color: var(--azul);
   color: white;
   padding: 14px 24px;
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  border-bottom: 4px solid var(--naranja);
 }
 
 .encabezado h1 {
   margin: 0;
   font-size: 22px;
+}
+
+.subtitulo {
+  font-size: 14px;
+  opacity: 0.8;
 }
 
 /* Zona central de la pagina */
@@ -40,7 +49,13 @@ body {
 
 .contenido h2 {
   color: var(--azul);
-  margin-top: 0;
+  margin: 0 0 4px 0;
+}
+
+.descripcion {
+  margin: 0 0 16px 0;
+  color: #666;
+  font-size: 14px;
 }
 
 /* Filtros */
@@ -54,6 +69,7 @@ body {
   border-radius: 8px;
   padding: 16px;
   margin-bottom: 16px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
 }
 
 .filtros label {
@@ -160,6 +176,129 @@ body {
   border-bottom: 1px solid #eef1f5;
 }
 
+.tabla tbody tr {
+  cursor: pointer;
+}
+
+/* filas intercaladas para que la tabla sea mas facil de leer */
+.tabla tbody tr:nth-child(even) {
+  background-color: #f8fafc;
+}
+
 .tabla tbody tr:hover {
   background-color: var(--azul-claro);
+}
+
+/* Ventana de detalle */
+.fondo-ventana {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 16px;
+}
+
+.ventana {
+  background-color: white;
+  border-radius: 10px;
+  width: 100%;
+  max-width: 680px;
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+}
+
+/* Encabezado de la ventana con una linea de color abajo */
+.ventana-titulo {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  padding: 18px 24px 14px 24px;
+  border-bottom: 3px solid var(--naranja);
+}
+
+.ventana-titulo h3 {
+  margin: 0;
+  font-size: 20px;
+  color: var(--azul);
+}
+
+.ventana-subtitulo {
+  font-size: 14px;
+  color: #777;
+}
+
+.boton-cerrar {
+  background: none;
+  border: none;
+  font-size: 20px;
+  cursor: pointer;
+  color: #777;
+}
+
+.boton-cerrar:hover {
+  color: var(--texto);
+}
+
+.ventana-contenido {
+  padding: 8px 24px 24px 24px;
+  overflow-y: auto;
+}
+
+/* Titulo de cada seccion */
+.ventana-contenido h4 {
+  color: var(--azul);
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin: 20px 0 4px 0;
+}
+
+/* Cada dato es una fila: etiqueta a la izquierda, valor a la derecha */
+.dato {
+  display: grid;
+  grid-template-columns: 190px 1fr;
+  gap: 12px;
+  padding: 7px 0;
+  border-bottom: 1px solid #eef1f5;
+  font-size: 14px;
+}
+
+.dato-etiqueta {
+  color: #777;
+}
+
+.dato-valor {
+  word-break: break-word;
+}
+
+/* Linea secundaria debajo de un valor (telefono, ciudad, etc.) */
+.dato-extra {
+  display: block;
+  font-size: 13px;
+  color: #777;
+  margin-top: 2px;
+}
+
+.mapa {
+  width: 100%;
+  height: 260px;
+  border: 1px solid var(--gris-borde);
+  border-radius: 6px;
+  margin-top: 6px;
+}
+
+/* En pantallas pequeñas la etiqueta va arriba del valor */
+@media (max-width: 600px) {
+  .dato {
+    grid-template-columns: 1fr;
+    gap: 2px;
+  }
 }

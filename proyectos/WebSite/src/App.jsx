@@ -5,6 +5,7 @@ function App() {
     <>
       <header className="encabezado">
         <h1>Wide World Importers</h1>
+        <span className="subtitulo">Sistema de consulta</span>
       </header>
 
       <main className="contenido">

@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { consultar } from '../api';
+import DetalleCliente from '../components/DetalleCliente';
 
 function Clientes() {
   // filtros
@@ -15,6 +16,9 @@ function Clientes() {
   const [clientes, setClientes] = useState([]);
   const [cargando, setCargando] = useState(false);
   const [error, setError] = useState('');
+
+  // cliente seleccionado en la tabla (null = ventana de detalle cerrada)
+  const [clienteId, setClienteId] = useState(null);
 
   async function cargarCatalogos() {
     try {
@@ -71,6 +75,7 @@ function Clientes() {
   return (
     <>
       <h2>Clientes</h2>
+      <p className="descripcion">Busque clientes por nombre, categoría o método de entrega.</p>
 
       <form className="filtros" onSubmit={alBuscar}>
         <label>
@@ -126,7 +131,9 @@ function Clientes() {
 
       {!cargando && clientes.length > 0 && (
         <>
-          <p className="total">{clientes.length} clientes encontrados</p>
+          <p className="total">
+            {clientes.length} clientes encontrados. Haga clic en uno para ver su detalle.
+          </p>
 
           <div className="tabla-contenedor">
             <table className="tabla">
@@ -139,7 +146,7 @@ function Clientes() {
               </thead>
               <tbody>
                 {clientes.map((c) => (
-                  <tr key={c.ClienteID}>
+                  <tr key={c.ClienteID} onClick={() => setClienteId(c.ClienteID)}>
                     <td>{c.Nombre}</td>
                     <td>{c.Categoria}</td>
                     <td>{c.MetodoEntrega}</td>
@@ -149,6 +156,10 @@ function Clientes() {
             </table>
           </div>
         </>
+      )}
+
+      {clienteId !== null && (
+        <DetalleCliente clienteId={clienteId} alCerrar={() => setClienteId(null)} />
       )}
     </>
   );
