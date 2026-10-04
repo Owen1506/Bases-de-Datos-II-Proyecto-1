@@ -1,6 +1,6 @@
 const express = require('express');
 const { ejecutarSP } = require('../db');
-const { esEntero } = require('../validar');
+const { esEntero, vacio } = require('../validar');
 
 const router = express.Router();
 
@@ -68,10 +68,6 @@ const IDS_OBLIGATORIOS = [
   'CategoriaID', 'ContactoPrimarioID',
   'MetodoEntregaID', 'CiudadEntregaID', 'CiudadPostalID'
 ];
-
-function vacio(valor) {
-  return valor === undefined || valor === null || valor === '';
-}
 
 // Revisa los datos del formulario. Devuelve el mensaje de error o '' si todo esta bien.
 function validarCliente(c) {

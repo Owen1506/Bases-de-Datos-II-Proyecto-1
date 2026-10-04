@@ -180,6 +180,18 @@ BEGIN
             THROW 50001, 'El cliente indicado no existe.', 1;
         END;
 
+        -- Formato del sitio web y de los codigos postales (5 digitos, como todos los de la base)
+        IF (@SitioWeb NOT LIKE 'http://_%._%' AND @SitioWeb NOT LIKE 'https://_%._%') OR @SitioWeb LIKE '% %'
+        BEGIN
+            THROW 50005, 'El sitio web debe empezar con http:// o https://, por ejemplo http://www.ejemplo.com', 1;
+        END;
+
+        IF @CodigoPostalEntrega NOT LIKE '[0-9][0-9][0-9][0-9][0-9]'
+           OR @CodigoPostalPostal NOT LIKE '[0-9][0-9][0-9][0-9][0-9]'
+        BEGIN
+            THROW 50006, 'El código postal debe tener 5 dígitos.', 1;
+        END;
+
         -- si no se indica a quien facturar, el cliente se factura a si mismo
         IF @ClienteFacturarID IS NULL SET @ClienteFacturarID = @ClienteID;
 
@@ -275,6 +287,18 @@ BEGIN
 
     BEGIN TRY
         BEGIN TRANSACTION;
+
+        -- Formato del sitio web y de los codigos postales (5 digitos, como todos los de la base)
+        IF (@SitioWeb NOT LIKE 'http://_%._%' AND @SitioWeb NOT LIKE 'https://_%._%') OR @SitioWeb LIKE '% %'
+        BEGIN
+            THROW 50005, 'El sitio web debe empezar con http:// o https://, por ejemplo http://www.ejemplo.com', 1;
+        END;
+
+        IF @CodigoPostalEntrega NOT LIKE '[0-9][0-9][0-9][0-9][0-9]'
+           OR @CodigoPostalPostal NOT LIKE '[0-9][0-9][0-9][0-9][0-9]'
+        BEGIN
+            THROW 50006, 'El código postal debe tener 5 dígitos.', 1;
+        END;
 
         -- si factura a otro cliente, ese cliente debe ser del mismo grupo de compra
         IF @ClienteFacturarID IS NOT NULL

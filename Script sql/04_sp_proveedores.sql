@@ -87,7 +87,17 @@ BEGIN
         s.BankAccountBranch AS NombreBanco, -- BankAccountName es el titular, el banco esta en BankAccountBranch
         s.BankAccountNumber AS NumeroCuenta,
 
-        s.PaymentDays AS DiasPago
+        s.PaymentDays AS DiasPago,
+
+        -- IDs y provincias para llenar el formulario de edicion
+        s.SupplierCategoryID AS CategoriaID,
+        s.PrimaryContactPersonID AS ContactoPrimarioID,
+        s.AlternateContactPersonID AS ContactoAlternativoID,
+        s.DeliveryMethodID AS MetodoEntregaID,
+        s.DeliveryCityID AS CiudadEntregaID,
+        s.PostalCityID AS CiudadPostalID,
+        dsp.StateProvinceName AS ProvinciaEntrega,
+        psp.StateProvinceName AS ProvinciaPostal
 
     FROM syn.Suppliers s
 
@@ -108,6 +118,12 @@ BEGIN
 
     JOIN syn.Cities pci
         ON pci.CityID = s.PostalCityID
+
+    JOIN syn.StateProvinces dsp
+        ON dsp.StateProvinceID = dc.StateProvinceID
+
+    JOIN syn.StateProvinces psp
+        ON psp.StateProvinceID = pci.StateProvinceID
 
     WHERE s.SupplierID = @ProveedorID;
 END;
@@ -154,6 +170,18 @@ BEGIN
     BEGIN TRY
         BEGIN TRANSACTION;
 
+        -- Formato del sitio web y de los codigos postales (5 digitos, como todos los de la base)
+        IF (@SitioWeb NOT LIKE 'http://_%._%' AND @SitioWeb NOT LIKE 'https://_%._%') OR @SitioWeb LIKE '% %'
+        BEGIN
+            THROW 50005, 'El sitio web debe empezar con http:// o https://, por ejemplo http://www.ejemplo.com', 1;
+        END;
+
+        IF @CodigoPostalEntrega NOT LIKE '[0-9][0-9][0-9][0-9][0-9]'
+           OR @CodigoPostalPostal NOT LIKE '[0-9][0-9][0-9][0-9][0-9]'
+        BEGIN
+            THROW 50006, 'El código postal debe tener 5 dígitos.', 1;
+        END;
+
         INSERT INTO syn.Suppliers (
             SupplierName,
             SupplierCategoryID,
@@ -163,7 +191,7 @@ BEGIN
             DeliveryCityID,
             PostalCityID,
             SupplierReference,
-            BankAccountName,
+            BankAccountBranch, -- nombre del banco (BankAccountName es el titular)
             BankAccountNumber,
             PaymentDays,
             PhoneNumber,
@@ -220,6 +248,12 @@ BEGIN
         IF @@TRANCOUNT > 0
             ROLLBACK TRANSACTION;
 
+        -- 2627 / 2601: el nombre del proveedor ya existe (restriccion UNIQUE)
+        IF ERROR_NUMBER() IN (2627, 2601)
+        BEGIN
+            THROW 50003, 'Ya existe un proveedor con ese nombre.', 1;
+        END;
+
         THROW;
     END CATCH;
 END;
@@ -273,6 +307,18 @@ BEGIN
             THROW 50001, 'El proveedor indicado no existe.', 1;
         END;
 
+        -- Formato del sitio web y de los codigos postales (5 digitos, como todos los de la base)
+        IF (@SitioWeb NOT LIKE 'http://_%._%' AND @SitioWeb NOT LIKE 'https://_%._%') OR @SitioWeb LIKE '% %'
+        BEGIN
+            THROW 50005, 'El sitio web debe empezar con http:// o https://, por ejemplo http://www.ejemplo.com', 1;
+        END;
+
+        IF @CodigoPostalEntrega NOT LIKE '[0-9][0-9][0-9][0-9][0-9]'
+           OR @CodigoPostalPostal NOT LIKE '[0-9][0-9][0-9][0-9][0-9]'
+        BEGIN
+            THROW 50006, 'El código postal debe tener 5 dígitos.', 1;
+        END;
+
         UPDATE syn.Suppliers
         SET
             SupplierName = @Nombre,
@@ -285,7 +331,7 @@ BEGIN
 
             SupplierReference = @ReferenciaProveedor,
 
-            BankAccountName = @NombreBanco,
+            BankAccountBranch = @NombreBanco,
             BankAccountNumber = @NumeroCuenta,
 
             PaymentDays = @DiasPago,
@@ -319,6 +365,12 @@ BEGIN
     BEGIN CATCH
         IF @@TRANCOUNT > 0
             ROLLBACK TRANSACTION;
+
+        -- 2627 / 2601: el nombre del proveedor ya existe (restriccion UNIQUE)
+        IF ERROR_NUMBER() IN (2627, 2601)
+        BEGIN
+            THROW 50003, 'Ya existe un proveedor con ese nombre.', 1;
+        END;
 
         THROW;
     END CATCH;

@@ -1,66 +1,66 @@
 import { useEffect, useState } from 'react';
 import { consultar, enviar } from '../api';
 import Buscador from '../components/Buscador';
-import DetalleProveedor from '../components/DetalleProveedor';
-import FormularioProveedor from '../components/FormularioProveedor';
+import DetalleProducto from '../components/DetalleProducto';
+import FormularioProducto from '../components/FormularioProducto';
 import Paginacion from '../components/Paginacion';
 import { ICONO_BASURERO, ICONO_LAPIZ } from '../components/Iconos';
 
-// Cantidad de proveedores por pagina. Debe ser igual al @TamanoPagina del SP.
+// Cantidad de productos por pagina. Debe ser igual al @TamanoPagina del SP.
 const TAMANO_PAGINA = 10;
 
-const FILTROS_VACIOS = { nombre: '', categoriaId: '' };
+const FILTROS_VACIOS = { nombre: '', grupoId: '' };
 
-function Proveedores() {
+function Inventario() {
   // lo que el usuario va escribiendo en los filtros
   const [nombre, setNombre] = useState('');
-  const [categoriaId, setCategoriaId] = useState('');
+  const [grupoId, setGrupoId] = useState('');
 
   // filtros de la ultima busqueda, se usan al cambiar de pagina
   const [filtrosAplicados, setFiltrosAplicados] = useState(FILTROS_VACIOS);
 
-  const [categorias, setCategorias] = useState([]);
+  const [grupos, setGrupos] = useState([]);
 
-  const [proveedores, setProveedores] = useState([]);
+  const [productos, setProductos] = useState([]);
   const [pagina, setPagina] = useState(1);
   const [total, setTotal] = useState(0);
   const [cargando, setCargando] = useState(false);
   const [error, setError] = useState('');
 
-  // proveedor seleccionado en la tabla (null = ventana de detalle cerrada)
-  const [proveedorId, setProveedorId] = useState(null);
+  // producto seleccionado en la tabla (null = ventana de detalle cerrada)
+  const [productoId, setProductoId] = useState(null);
 
   // cambia cada vez que se restauran los filtros, para vaciar el buscador de nombre
   const [reinicios, setReinicios] = useState(0);
 
   const [formularioAbierto, setFormularioAbierto] = useState(false);
-  const [proveedorEditarId, setProveedorEditarId] = useState(null); // null = proveedor nuevo
+  const [productoEditarId, setProductoEditarId] = useState(null); // null = producto nuevo
   const [exito, setExito] = useState('');
 
-  async function cargarCategorias() {
+  async function cargarGrupos() {
     try {
-      setCategorias(await consultar('/catalogos/categorias-proveedor'));
+      setGrupos(await consultar('/catalogos/grupos-inventario'));
     } catch (e) {
       setError(e.message);
     }
   }
 
-  // Le pide a la API una pagina de proveedores con los filtros indicados.
+  // Le pide a la API una pagina de productos con los filtros indicados.
   // El filtrado, el orden y la paginacion los hace el stored procedure.
   async function buscar(filtros, numeroPagina) {
-    let ruta = '/proveedores?pagina=' + numeroPagina;
+    let ruta = '/inventario?pagina=' + numeroPagina;
     if (filtros.nombre.trim() !== '') {
       ruta += '&nombre=' + encodeURIComponent(filtros.nombre.trim());
     }
-    if (filtros.categoriaId !== '') {
-      ruta += '&categoriaId=' + filtros.categoriaId;
+    if (filtros.grupoId !== '') {
+      ruta += '&grupoId=' + filtros.grupoId;
     }
 
     setCargando(true);
     setError('');
     try {
       const datos = await consultar(ruta);
-      setProveedores(datos);
+      setProductos(datos);
       // el total viene repetido en cada fila; si no hay filas es 0
       if (datos.length > 0) {
         setTotal(datos[0].TotalRegistros);
@@ -70,16 +70,16 @@ function Proveedores() {
       setFiltrosAplicados(filtros);
       setPagina(numeroPagina);
     } catch (e) {
-      setProveedores([]);
+      setProductos([]);
       setTotal(0);
       setError(e.message);
     }
     setCargando(false);
   }
 
-  // Al abrir la pagina se carga el select y la primera pagina de proveedores
+  // Al abrir la pagina se carga el select y la primera pagina de productos
   useEffect(() => {
-    cargarCategorias();
+    cargarGrupos();
     buscar(FILTROS_VACIOS, 1);
   }, []);
 
@@ -87,13 +87,13 @@ function Proveedores() {
   function alBuscar(evento) {
     evento.preventDefault(); // evita que el formulario recargue la pagina
     setExito('');
-    buscar({ nombre: nombre, categoriaId: categoriaId }, 1);
+    buscar({ nombre: nombre, grupoId: grupoId }, 1);
   }
 
   function restaurar() {
     setNombre('');
     setReinicios(reinicios + 1);
-    setCategoriaId('');
+    setGrupoId('');
     setExito('');
     buscar(FILTROS_VACIOS, 1);
   }
@@ -104,13 +104,13 @@ function Proveedores() {
   }
 
   function abrirNuevo() {
-    setProveedorEditarId(null);
+    setProductoEditarId(null);
     setFormularioAbierto(true);
   }
 
   function abrirEditar(evento, id) {
     evento.stopPropagation(); // evita que el clic tambien abra el detalle
-    setProveedorEditarId(id);
+    setProductoEditarId(id);
     setFormularioAbierto(true);
   }
 
@@ -121,20 +121,20 @@ function Proveedores() {
     buscar(filtrosAplicados, pagina);
   }
 
-  async function eliminar(evento, proveedor) {
+  async function eliminar(evento, producto) {
     evento.stopPropagation(); // evita que el clic tambien abra el detalle
 
-    if (!window.confirm('¿Seguro que desea eliminar a "' + proveedor.Nombre + '"?')) {
+    if (!window.confirm('¿Seguro que desea eliminar "' + producto.Nombre + '"?')) {
       return;
     }
 
     setExito('');
     try {
-      const respuesta = await enviar('/proveedores/' + proveedor.ProveedorID, 'DELETE', {});
+      const respuesta = await enviar('/inventario/' + producto.ProductoID, 'DELETE', {});
       setExito(respuesta.mensaje);
       buscar(filtrosAplicados, pagina);
     } catch (e) {
-      // por ejemplo: "No se puede eliminar el proveedor porque tiene registros asociados."
+      // por ejemplo: "No se puede eliminar el producto porque tiene registros asociados."
       setError(e.message);
     }
   }
@@ -143,10 +143,10 @@ function Proveedores() {
     <>
       <div className="titulo-modulo">
         <div>
-          <h2>Proveedores</h2>
-          <p className="descripcion">Busque proveedores y haga clic en uno para ver su detalle.</p>
+          <h2>Inventario</h2>
+          <p className="descripcion">Busque productos y haga clic en uno para ver su detalle.</p>
         </div>
-        <button className="boton" onClick={abrirNuevo}>+ Nuevo proveedor</button>
+        <button className="boton" onClick={abrirNuevo}>+ Nuevo producto</button>
       </div>
 
       <div className="modulo-columnas">
@@ -158,22 +158,22 @@ function Proveedores() {
               El key cambia al restaurar los filtros y eso vacia el campo */}
           <Buscador
             key={reinicios}
-            etiqueta="Nombre del proveedor"
-            ruta="/catalogos/proveedores"
-            campoId="ProveedorID"
-            campoTexto="Proveedor"
+            etiqueta="Nombre del producto"
+            ruta="/catalogos/productos"
+            campoId="ProductoID"
+            campoTexto="Producto"
             textoInicial=""
             placeholder="Escriba parte del nombre"
             alElegir={(id, texto) => setNombre(texto)}
           />
 
           <label>
-            Categoría
-            <select value={categoriaId} onChange={(e) => setCategoriaId(e.target.value)}>
-              <option value="">Todas</option>
-              {categorias.map((c) => (
-                <option key={c.CategoriaID} value={c.CategoriaID}>
-                  {c.Categoria}
+            Grupo
+            <select value={grupoId} onChange={(e) => setGrupoId(e.target.value)}>
+              <option value="">Todos</option>
+              {grupos.map((g) => (
+                <option key={g.GrupoID} value={g.GrupoID}>
+                  {g.Grupo}
                 </option>
               ))}
             </select>
@@ -193,32 +193,30 @@ function Proveedores() {
 
           {cargando && <div className="mensaje">Cargando...</div>}
 
-          {!cargando && error === '' && proveedores.length === 0 && (
-            <div className="mensaje info">No se encontraron proveedores con esos filtros.</div>
+          {!cargando && error === '' && productos.length === 0 && (
+            <div className="mensaje info">No se encontraron productos con esos filtros.</div>
           )}
 
-          {!cargando && proveedores.length > 0 && (
+          {!cargando && productos.length > 0 && (
             <>
               <table className="tabla">
                 <thead>
                   <tr>
                     <th>Nombre</th>
-                    <th>Categoría</th>
-                    <th>Método de entrega</th>
+                    <th>Grupo</th>
+                    <th className="numero">Cantidad disponible</th>
                     <th></th>
                   </tr>
                 </thead>
                 <tbody>
-                  {proveedores.map((p) => (
-                    <tr key={p.ProveedorID} onClick={() => setProveedorId(p.ProveedorID)}>
+                  {productos.map((p) => (
+                    <tr key={p.ProductoID} onClick={() => setProductoId(p.ProductoID)}>
                       <td>{p.Nombre}</td>
-                      <td>
-                        <span className="badge">{p.Categoria}</span>
-                      </td>
-                      <td>{p.MetodoEntrega ? p.MetodoEntrega : '-'}</td>
+                      <td>{p.Grupo}</td>
+                      <td className="numero">{p.CantidadDisponible.toLocaleString()}</td>
                       {/* estos botones solo se ven al pasar el mouse por la fila (ver styles/tabla.css) */}
                       <td className="acciones">
-                        <button className="boton-icono" title="Editar" onClick={(e) => abrirEditar(e, p.ProveedorID)}>
+                        <button className="boton-icono" title="Editar" onClick={(e) => abrirEditar(e, p.ProductoID)}>
                           {ICONO_LAPIZ}
                         </button>
                         <button className="boton-icono peligro" title="Eliminar" onClick={(e) => eliminar(e, p)}>
@@ -234,8 +232,8 @@ function Proveedores() {
                 pagina={pagina}
                 total={total}
                 tamano={TAMANO_PAGINA}
-                cantidadFilas={proveedores.length}
-                elementos="proveedores"
+                cantidadFilas={productos.length}
+                elementos="productos"
                 alCambiar={cambiarPagina}
               />
             </>
@@ -243,13 +241,13 @@ function Proveedores() {
         </div>
       </div>
 
-      {proveedorId !== null && (
-        <DetalleProveedor proveedorId={proveedorId} alCerrar={() => setProveedorId(null)} />
+      {productoId !== null && (
+        <DetalleProducto productoId={productoId} alCerrar={() => setProductoId(null)} />
       )}
 
       {formularioAbierto && (
-        <FormularioProveedor
-          proveedorId={proveedorEditarId}
+        <FormularioProducto
+          productoId={productoEditarId}
           alCerrar={() => setFormularioAbierto(false)}
           alGuardar={alGuardar}
         />
@@ -258,4 +256,4 @@ function Proveedores() {
   );
 }
 
-export default Proveedores;
+export default Inventario;

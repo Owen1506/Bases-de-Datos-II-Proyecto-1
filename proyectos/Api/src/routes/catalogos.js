@@ -21,6 +21,23 @@ router.get('/categorias-proveedor', async (req, res) => {
   res.json(await ejecutarSP('dbo.usp_Catalogo_CategoriasProveedor'));
 });
 
+router.get('/grupos-inventario', async (req, res) => {
+  res.json(await ejecutarSP('dbo.usp_Catalogo_GruposInventario'));
+});
+
+router.get('/colores', async (req, res) => {
+  res.json(await ejecutarSP('dbo.usp_Catalogo_Colores'));
+});
+
+router.get('/tipos-empaque', async (req, res) => {
+  res.json(await ejecutarSP('dbo.usp_Catalogo_TiposEmpaque'));
+});
+
+// Lista completa de proveedores para el select del formulario de productos (son 13)
+router.get('/lista-proveedores', async (req, res) => {
+  res.json(await ejecutarSP('dbo.usp_Catalogo_Proveedores'));
+});
+
 // Buscadores: reciben ?texto= y devuelven las primeras 20 coincidencias.
 // Si el texto tiene menos de 2 letras no se consulta la base.
 
@@ -46,6 +63,22 @@ router.get('/clientes', async (req, res) => {
     return res.json([]);
   }
   res.json(await ejecutarSP('dbo.usp_Catalogo_BuscarClientes', { Texto: texto }));
+});
+
+router.get('/proveedores', async (req, res) => {
+  const texto = req.query.texto || '';
+  if (texto.length < 2) {
+    return res.json([]);
+  }
+  res.json(await ejecutarSP('dbo.usp_Catalogo_BuscarProveedores', { Texto: texto }));
+});
+
+router.get('/productos', async (req, res) => {
+  const texto = req.query.texto || '';
+  if (texto.length < 2) {
+    return res.json([]);
+  }
+  res.json(await ejecutarSP('dbo.usp_Catalogo_BuscarProductos', { Texto: texto }));
 });
 
 module.exports = router;

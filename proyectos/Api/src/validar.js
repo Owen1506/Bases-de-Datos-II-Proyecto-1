@@ -1,6 +1,11 @@
-// Revisa que un parametro de la URL sea un numero entero
+// Revisa que un parametro sea un numero entero
 function esEntero(valor) {
   return Number.isInteger(Number(valor));
 }
 
-module.exports = { esEntero };
+// Revisa si un campo del formulario viene sin valor
+function vacio(valor) {
+  return valor === undefined || valor === null || valor === '';
+}
+
+module.exports = { esEntero, vacio };
