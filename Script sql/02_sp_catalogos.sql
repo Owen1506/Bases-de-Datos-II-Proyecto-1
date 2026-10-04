@@ -24,3 +24,129 @@ BEGIN
     ORDER BY DeliveryMethodName;
 END;
 GO
+
+CREATE OR ALTER PROCEDURE dbo.usp_Catalogo_GruposInventario
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    SELECT
+        StockGroupID AS GrupoID,
+        StockGroupName AS Grupo
+    FROM syn.StockGroups
+    ORDER BY StockGroupName ASC;
+END;
+GO
+
+
+CREATE OR ALTER PROCEDURE dbo.usp_Catalogo_Colores
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    SELECT
+        ColorID,
+        ColorName AS Color
+    FROM syn.Colors
+    ORDER BY ColorName ASC;
+END;
+GO
+
+
+CREATE OR ALTER PROCEDURE dbo.usp_Catalogo_TiposEmpaque
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    SELECT
+        PackageTypeID AS TipoEmpaqueID,
+        PackageTypeName AS TipoEmpaque
+    FROM syn.PackageTypes
+    ORDER BY PackageTypeName ASC;
+END;
+GO
+
+
+CREATE OR ALTER PROCEDURE dbo.usp_Catalogo_Proveedores
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    SELECT
+        SupplierID AS ProveedorID,
+        SupplierName AS Proveedor
+    FROM syn.Suppliers
+    ORDER BY SupplierName ASC;
+END;
+GO
+
+CREATE OR ALTER PROCEDURE dbo.usp_Catalogo_Clientes
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    SELECT
+        CustomerID AS ClienteID,
+        CustomerName AS Cliente
+    FROM syn.Customers
+    ORDER BY CustomerName ASC;
+END;
+GO
+
+CREATE OR ALTER PROCEDURE dbo.usp_Catalogo_Vendedores
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    SELECT
+        PersonID AS VendedorID,
+        FullName AS Vendedor
+    FROM syn.People
+    WHERE IsSalesperson = 1
+    ORDER BY FullName ASC;
+END;
+GO
+
+CREATE OR ALTER PROCEDURE dbo.usp_Catalogo_ContactosCliente
+    @ClienteID INT
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    SELECT
+        p.PersonID AS ContactoID,
+        p.FullName AS Contacto,
+        'Primario' AS Tipo
+    FROM syn.Customers c
+    JOIN syn.People p
+        ON p.PersonID = c.PrimaryContactPersonID
+    WHERE c.CustomerID = @ClienteID
+
+    UNION ALL
+
+    SELECT
+        p.PersonID,
+        p.FullName,
+        'Alternativo'
+    FROM syn.Customers c
+    JOIN syn.People p
+        ON p.PersonID = c.AlternateContactPersonID
+    WHERE c.CustomerID = @ClienteID
+      AND c.AlternateContactPersonID IS NOT NULL;
+END;
+GO
+
+CREATE OR ALTER PROCEDURE dbo.usp_Catalogo_Productos
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    SELECT
+        StockItemID AS ProductoID,
+        StockItemName AS Producto,
+        UnitPrice AS PrecioUnitario,
+        TaxRate AS Impuesto
+    FROM syn.StockItems
+    ORDER BY StockItemName ASC;
+END;
+GO
