@@ -7,6 +7,7 @@ const cors = require('cors');
 const clientes = require('./routes/clientes');
 const proveedores = require('./routes/proveedores');
 const catalogos = require('./routes/catalogos');
+const estadisticas = require('./routes/estadisticas');
 
 const app = express();
 const PUERTO = 3000;
@@ -17,6 +18,7 @@ app.use(express.json()); // para leer el cuerpo JSON de los POST y PUT
 app.use('/api/clientes', clientes);
 app.use('/api/proveedores', proveedores);
 app.use('/api/catalogos', catalogos);
+app.use('/api/estadisticas', estadisticas);
 
 // Ruta no encontrada
 app.use((req, res) => {
