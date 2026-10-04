@@ -1,7 +1,9 @@
 import { useEffect, useState } from 'react';
-import { consultar } from '../api';
+import { consultar, enviar } from '../api';
 import DetalleProveedor from '../components/DetalleProveedor';
+import FormularioProveedor from '../components/FormularioProveedor';
 import Paginacion from '../components/Paginacion';
+import { ICONO_BASURERO, ICONO_LAPIZ } from '../components/Iconos';
 
 // Cantidad de proveedores por pagina. Debe ser igual al @TamanoPagina del SP.
 const TAMANO_PAGINA = 10;
@@ -26,6 +28,10 @@ function Proveedores() {
 
   // proveedor seleccionado en la tabla (null = ventana de detalle cerrada)
   const [proveedorId, setProveedorId] = useState(null);
+
+  const [formularioAbierto, setFormularioAbierto] = useState(false);
+  const [proveedorEditarId, setProveedorEditarId] = useState(null); // null = proveedor nuevo
+  const [exito, setExito] = useState('');
 
   async function cargarCategorias() {
     try {
@@ -76,12 +82,14 @@ function Proveedores() {
   // Una busqueda nueva siempre empieza en la pagina 1
   function alBuscar(evento) {
     evento.preventDefault(); // evita que el formulario recargue la pagina
+    setExito('');
     buscar({ nombre: nombre, categoriaId: categoriaId }, 1);
   }
 
   function restaurar() {
     setNombre('');
     setCategoriaId('');
+    setExito('');
     buscar(FILTROS_VACIOS, 1);
   }
 
@@ -90,10 +98,51 @@ function Proveedores() {
     buscar(filtrosAplicados, numero);
   }
 
+  function abrirNuevo() {
+    setProveedorEditarId(null);
+    setFormularioAbierto(true);
+  }
+
+  function abrirEditar(evento, id) {
+    evento.stopPropagation(); // evita que el clic tambien abra el detalle
+    setProveedorEditarId(id);
+    setFormularioAbierto(true);
+  }
+
+  // Cuando el formulario guarda bien: se cierra, se muestra el mensaje y se recarga la tabla
+  function alGuardar(mensaje) {
+    setFormularioAbierto(false);
+    setExito(mensaje);
+    buscar(filtrosAplicados, pagina);
+  }
+
+  async function eliminar(evento, proveedor) {
+    evento.stopPropagation(); // evita que el clic tambien abra el detalle
+
+    if (!window.confirm('¿Seguro que desea eliminar a "' + proveedor.Nombre + '"?')) {
+      return;
+    }
+
+    setExito('');
+    try {
+      const respuesta = await enviar('/proveedores/' + proveedor.ProveedorID, 'DELETE', {});
+      setExito(respuesta.mensaje);
+      buscar(filtrosAplicados, pagina);
+    } catch (e) {
+      // por ejemplo: "No se puede eliminar el proveedor porque tiene registros asociados."
+      setError(e.message);
+    }
+  }
+
   return (
     <>
-      <h2>Proveedores</h2>
-      <p className="descripcion">Busque proveedores y haga clic en uno para ver su detalle.</p>
+      <div className="titulo-modulo">
+        <div>
+          <h2>Proveedores</h2>
+          <p className="descripcion">Busque proveedores y haga clic en uno para ver su detalle.</p>
+        </div>
+        <button className="boton" onClick={abrirNuevo}>+ Nuevo proveedor</button>
+      </div>
 
       <div className="modulo-columnas">
         {/* Panel izquierdo: filtros */}
@@ -131,6 +180,8 @@ function Proveedores() {
 
         {/* Area principal: tabla y paginacion */}
         <div className="panel panel-resultados">
+          {exito !== '' && <div className="mensaje exito">{exito}</div>}
+
           {error !== '' && <div className="mensaje error">{error}</div>}
 
           {cargando && <div className="mensaje">Cargando...</div>}
@@ -147,6 +198,7 @@ function Proveedores() {
                     <th>Nombre</th>
                     <th>Categoría</th>
                     <th>Método de entrega</th>
+                    <th></th>
                   </tr>
                 </thead>
                 <tbody>
@@ -157,6 +209,15 @@ function Proveedores() {
                         <span className="badge">{p.Categoria}</span>
                       </td>
                       <td>{p.MetodoEntrega ? p.MetodoEntrega : '-'}</td>
+                      {/* estos botones solo se ven al pasar el mouse por la fila (ver styles/tabla.css) */}
+                      <td className="acciones">
+                        <button className="boton-icono" title="Editar" onClick={(e) => abrirEditar(e, p.ProveedorID)}>
+                          {ICONO_LAPIZ}
+                        </button>
+                        <button className="boton-icono peligro" title="Eliminar" onClick={(e) => eliminar(e, p)}>
+                          {ICONO_BASURERO}
+                        </button>
+                      </td>
                     </tr>
                   ))}
                 </tbody>
@@ -177,6 +238,14 @@ function Proveedores() {
 
       {proveedorId !== null && (
         <DetalleProveedor proveedorId={proveedorId} alCerrar={() => setProveedorId(null)} />
+      )}
+
+      {formularioAbierto && (
+        <FormularioProveedor
+          proveedorId={proveedorEditarId}
+          alCerrar={() => setFormularioAbierto(false)}
+          alGuardar={alGuardar}
+        />
       )}
     </>
   );

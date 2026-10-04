@@ -39,6 +39,12 @@
   border-color: transparent;
 }
 
+/* Asterisco de los campos obligatorios */
+.obligatorio {
+  color: #c62828;
+  font-weight: 600;
+}
+
 /* Texto de ayuda pequeño debajo de un campo */
 .ayuda {
   font-size: clamp(11px, 0.75vw, 12px);

@@ -8,13 +8,16 @@ import { consultar } from '../api';
 // ruta: ruta del buscador en la API, por ejemplo '/catalogos/ciudades'
 // campoId y campoTexto: nombres de las columnas que devuelve el SP
 // ayuda: texto pequeño opcional debajo del campo
-function Buscador({ etiqueta, ruta, campoId, campoTexto, textoInicial, alElegir, ayuda }) {
+// obligatorio: si es true se muestra el asterisco rojo junto a la etiqueta
+function Buscador({ etiqueta, ruta, campoId, campoTexto, textoInicial, alElegir, ayuda, obligatorio }) {
   const [texto, setTexto] = useState(textoInicial);
   const [opciones, setOpciones] = useState([]);
 
   async function alEscribir(valor) {
     setTexto(valor);
-    alElegir(null); // si cambia el texto, la opcion elegida antes ya no vale
+    // si cambia el texto, la opcion elegida antes ya no vale;
+    // tambien se avisa el texto, para saber si quedo algo escrito sin elegir
+    alElegir(null, valor);
 
     // con menos de 2 letras no se busca
     if (valor.trim().length < 2) {
@@ -32,12 +35,14 @@ function Buscador({ etiqueta, ruta, campoId, campoTexto, textoInicial, alElegir,
   function elegir(opcion) {
     setTexto(opcion[campoTexto]);
     setOpciones([]);
-    alElegir(opcion[campoId]);
+    alElegir(opcion[campoId], opcion[campoTexto]);
   }
 
   return (
     <label className="buscador">
-      {etiqueta}
+      <span>
+        {etiqueta} {obligatorio && <span className="obligatorio">*</span>}
+      </span>
       <input
         type="text"
         value={texto}

@@ -56,3 +56,38 @@ EXEC dbo.usp_Clientes_Insertar
     @DireccionEntrega1 = 'Shop 1', @CodigoPostalEntrega = '90410', @DireccionPostal1 = 'PO Box 1',
     @CodigoPostalPostal = '90410';
 GO
+
+-- Proveedores
+EXEC dbo.usp_Catalogo_CategoriasProveedor;
+EXEC dbo.usp_Proveedores_Listar;
+EXEC dbo.usp_Proveedores_Listar @Nombre = 'pub';
+EXEC dbo.usp_Proveedores_Listar @CategoriaID = 2;
+EXEC dbo.usp_Proveedores_Listar @Pagina = 2;
+EXEC dbo.usp_Proveedores_Detalle @ProveedorID = 2;
+GO
+
+-- CRUD de proveedores: se crea un proveedor, se edita y se elimina
+DECLARE @nuevoProveedor TABLE (ProveedorID INT);
+DECLARE @idProveedor INT;
+
+INSERT @nuevoProveedor EXEC dbo.usp_Proveedores_Insertar
+    @Nombre = 'Proveedor Ejemplo', @CategoriaID = 2, @ContactoPrimarioID = 1001, @ContactoAlternativoID = 1002,
+    @MetodoEntregaID = 7, @CiudadEntregaID = 19586, @CiudadPostalID = 19586, @NombreBanco = 'Woodgrove Bank Lisco',
+    @NumeroCuenta = '1234567890', @DiasPago = 30, @Telefono = '(308) 555-0111', @Fax = '(308) 555-0112',
+    @SitioWeb = 'http://www.proveedor.com', @DireccionEntrega1 = 'Suite 1', @CodigoPostalEntrega = '90410',
+    @DireccionPostal1 = 'PO Box 1', @CodigoPostalPostal = '90410';
+SELECT @idProveedor = ProveedorID FROM @nuevoProveedor;
+
+EXEC dbo.usp_Proveedores_Actualizar
+    @ProveedorID = @idProveedor, @Nombre = 'Proveedor Ejemplo Editado', @CategoriaID = 2, @ContactoPrimarioID = 1001,
+    @ContactoAlternativoID = 1002, @MetodoEntregaID = 7, @CiudadEntregaID = 19586, @CiudadPostalID = 19586,
+    @NombreBanco = 'Woodgrove Bank Lisco', @NumeroCuenta = '1234567890', @DiasPago = 45, @Telefono = '(308) 555-0111',
+    @Fax = '(308) 555-0112', @SitioWeb = 'http://www.proveedor.com', @DireccionEntrega1 = 'Suite 1',
+    @CodigoPostalEntrega = '90410', @DireccionPostal1 = 'PO Box 1', @CodigoPostalPostal = '90410';
+
+EXEC dbo.usp_Proveedores_Detalle @ProveedorID = @idProveedor;
+EXEC dbo.usp_Proveedores_Eliminar @ProveedorID = @idProveedor;
+
+-- Este falla a proposito: el proveedor 1 tiene productos y ordenes de compra
+EXEC dbo.usp_Proveedores_Eliminar @ProveedorID = 1;
+GO
