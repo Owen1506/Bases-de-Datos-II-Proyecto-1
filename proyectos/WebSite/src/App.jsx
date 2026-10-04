@@ -3,6 +3,7 @@ import Pestanas from './components/Pestanas';
 import Clientes from './pages/Clientes';
 import Proveedores from './pages/Proveedores';
 import Inventario from './pages/Inventario';
+import Ventas from './pages/Ventas';
 
 // Modulos del sitio, cada uno es una pestaña
 const MODULOS = [
@@ -27,6 +28,9 @@ function App() {
     }
     if (moduloActivo === 'inventario') {
       return <Inventario />;
+    }
+    if (moduloActivo === 'ventas') {
+      return <Ventas />;
     }
     return <div className="mensaje info">Módulo en construcción.</div>;
   }

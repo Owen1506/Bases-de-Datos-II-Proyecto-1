@@ -38,6 +38,29 @@
   text-align: right;
 }
 
+/* Tabla de solo lectura (lineas de una factura): las filas no se seleccionan */
+.tabla-simple tbody tr {
+  cursor: default;
+}
+
+.tabla-simple tbody tr:hover {
+  background-color: transparent;
+}
+
+/* Las lineas de la factura pueden ser muchas: se desplazan dentro de su recuadro */
+.tabla-contenedor-lineas {
+  border: 1px solid var(--gris-borde);
+  border-radius: 6px;
+  overflow-x: auto;
+  margin-top: clamp(4px, 0.5vw, 8px);
+}
+
+.total-factura {
+  text-align: right;
+  font-size: clamp(14px, 1.1vw, 17px);
+  margin: clamp(8px, 0.8vw, 12px) 0 0 0;
+}
+
 .tabla tbody tr:hover {
   background-color: var(--azul-claro);
 }

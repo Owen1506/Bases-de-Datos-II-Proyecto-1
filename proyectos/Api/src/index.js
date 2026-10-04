@@ -7,6 +7,7 @@ const cors = require('cors');
 const clientes = require('./routes/clientes');
 const proveedores = require('./routes/proveedores');
 const inventario = require('./routes/inventario');
+const ventas = require('./routes/ventas');
 const catalogos = require('./routes/catalogos');
 
 const app = express();
@@ -18,6 +19,7 @@ app.use(express.json()); // para leer el cuerpo JSON de los POST y PUT
 app.use('/api/clientes', clientes);
 app.use('/api/proveedores', proveedores);
 app.use('/api/inventario', inventario);
+app.use('/api/ventas', ventas);
 app.use('/api/catalogos', catalogos);
 
 // Ruta no encontrada

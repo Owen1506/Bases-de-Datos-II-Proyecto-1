@@ -11,6 +11,8 @@ GO
 CREATE OR ALTER PROCEDURE dbo.usp_Inventario_Listar
     @Nombre NVARCHAR(100) = NULL,
     @GrupoID INT = NULL,
+    @CantidadMin INT = NULL,
+    @CantidadMax INT = NULL,
     @Pagina INT = 1
 AS
 BEGIN
@@ -21,6 +23,12 @@ BEGIN
 
     IF @Pagina < 1
         SET @Pagina = 1;
+
+    -- el rango de cantidad debe tener sentido
+    IF @CantidadMin IS NOT NULL AND @CantidadMax IS NOT NULL AND @CantidadMin > @CantidadMax
+    BEGIN
+        THROW 50011, 'La cantidad mínima no puede ser mayor que la cantidad máxima.', 1;
+    END;
 
     DECLARE @TamanoPagina INT = 10;
 
@@ -39,6 +47,8 @@ BEGIN
         ON sg.StockGroupID = sisg.StockGroupID
     WHERE
         (@Nombre IS NULL OR si.StockItemName LIKE '%' + @Nombre + '%')
+        AND (@CantidadMin IS NULL OR h.QuantityOnHand >= @CantidadMin)
+        AND (@CantidadMax IS NULL OR h.QuantityOnHand <= @CantidadMax)
         AND (
             @GrupoID IS NULL
             OR EXISTS (
