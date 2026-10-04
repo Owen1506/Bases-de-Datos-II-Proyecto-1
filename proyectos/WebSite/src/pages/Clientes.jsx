@@ -1,21 +1,26 @@
 import { useEffect, useState } from 'react';
-import { consultar } from '../api';
+import { consultar, enviar } from '../api';
 import DetalleCliente from '../components/DetalleCliente';
+import FormularioCliente from '../components/FormularioCliente';
 import Paginacion from '../components/Paginacion';
 
 // Cantidad de clientes por pagina. Debe ser igual al @TamanoPagina por defecto del SP.
 const TAMANO_PAGINA = 10;
 
-// Color del badge segun la categoria (solo es presentacion)
-const COLORES_CATEGORIA = {
-  'Novelty Shop': 'badge-naranja',
-  'Supermarket': 'badge-verde',
-  'Computer Store': 'badge-azul',
-  'Gift Store': 'badge-morado',
-  'Corporate': 'badge-gris'
-};
-
 const FILTROS_VACIOS = { nombre: '', categoriaId: '', metodoEntregaId: '' };
+
+// Iconos de los botones de editar y eliminar (dibujados con SVG)
+const ICONO_LAPIZ = (
+  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M17 3a2.83 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z" />
+  </svg>
+);
+const ICONO_BASURERO = (
+  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <polyline points="3 6 5 6 21 6" />
+    <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+  </svg>
+);
 
 function Clientes() {
   // lo que el usuario va escribiendo en los filtros
@@ -26,11 +31,9 @@ function Clientes() {
   // filtros de la ultima busqueda, se usan al cambiar de pagina
   const [filtrosAplicados, setFiltrosAplicados] = useState(FILTROS_VACIOS);
 
-  // opciones de los selects
   const [categorias, setCategorias] = useState([]);
   const [metodos, setMetodos] = useState([]);
 
-  // resultados
   const [clientes, setClientes] = useState([]);
   const [pagina, setPagina] = useState(1);
   const [total, setTotal] = useState(0);
@@ -39,6 +42,11 @@ function Clientes() {
 
   // cliente seleccionado en la tabla (null = ventana de detalle cerrada)
   const [clienteId, setClienteId] = useState(null);
+
+  const [formularioAbierto, setFormularioAbierto] = useState(false);
+  const [clienteEditarId, setClienteEditarId] = useState(null); // null = cliente nuevo
+
+  const [exito, setExito] = useState('');
 
   async function cargarCatalogos() {
     try {
@@ -93,6 +101,7 @@ function Clientes() {
   // Una busqueda nueva siempre empieza en la pagina 1
   function alBuscar(evento) {
     evento.preventDefault(); // evita que el formulario recargue la pagina
+    setExito('');
     buscar({ nombre: nombre, categoriaId: categoriaId, metodoEntregaId: metodoEntregaId }, 1);
   }
 
@@ -100,6 +109,7 @@ function Clientes() {
     setNombre('');
     setCategoriaId('');
     setMetodoEntregaId('');
+    setExito('');
     buscar(FILTROS_VACIOS, 1);
   }
 
@@ -108,10 +118,51 @@ function Clientes() {
     buscar(filtrosAplicados, numero);
   }
 
+  function abrirNuevo() {
+    setClienteEditarId(null);
+    setFormularioAbierto(true);
+  }
+
+  function abrirEditar(evento, id) {
+    evento.stopPropagation(); // evita que el clic tambien abra el detalle
+    setClienteEditarId(id);
+    setFormularioAbierto(true);
+  }
+
+  // Cuando el formulario guarda bien: se cierra, se muestra el mensaje y se recarga la tabla
+  function alGuardar(mensaje) {
+    setFormularioAbierto(false);
+    setExito(mensaje);
+    buscar(filtrosAplicados, pagina);
+  }
+
+  async function eliminar(evento, cliente) {
+    evento.stopPropagation(); // evita que el clic tambien abra el detalle
+
+    if (!window.confirm('¿Seguro que desea eliminar a "' + cliente.Nombre + '"?')) {
+      return;
+    }
+
+    setExito('');
+    try {
+      const respuesta = await enviar('/clientes/' + cliente.ClienteID, 'DELETE', {});
+      setExito(respuesta.mensaje);
+      buscar(filtrosAplicados, pagina);
+    } catch (e) {
+      // por ejemplo: "No se puede eliminar el cliente porque tiene registros asociados."
+      setError(e.message);
+    }
+  }
+
   return (
     <>
-      <h2>Clientes</h2>
-      <p className="descripcion">Busque clientes y haga clic en uno para ver su detalle.</p>
+      <div className="titulo-modulo">
+        <div>
+          <h2>Clientes</h2>
+          <p className="descripcion">Busque clientes y haga clic en uno para ver su detalle.</p>
+        </div>
+        <button className="boton" onClick={abrirNuevo}>+ Nuevo cliente</button>
+      </div>
 
       <div className="modulo-columnas">
         {/* Panel izquierdo: filtros */}
@@ -161,6 +212,8 @@ function Clientes() {
 
         {/* Area principal: tabla y paginacion */}
         <div className="panel panel-resultados">
+          {exito !== '' && <div className="mensaje exito">{exito}</div>}
+
           {error !== '' && <div className="mensaje error">{error}</div>}
 
           {cargando && <div className="mensaje">Cargando...</div>}
@@ -177,6 +230,7 @@ function Clientes() {
                     <th>Nombre</th>
                     <th>Categoría</th>
                     <th>Método de entrega</th>
+                    <th></th>
                   </tr>
                 </thead>
                 <tbody>
@@ -184,11 +238,20 @@ function Clientes() {
                     <tr key={c.ClienteID} onClick={() => setClienteId(c.ClienteID)}>
                       <td>{c.Nombre}</td>
                       <td>
-                        <span className={'badge ' + (COLORES_CATEGORIA[c.Categoria] || 'badge-gris')}>
+                        <span className="badge">
                           {c.Categoria}
                         </span>
                       </td>
                       <td>{c.MetodoEntrega}</td>
+                      {/* estos botones solo se ven al pasar el mouse por la fila (ver styles/tabla.css) */}
+                      <td className="acciones">
+                        <button className="boton-icono" title="Editar" onClick={(e) => abrirEditar(e, c.ClienteID)}>
+                          {ICONO_LAPIZ}
+                        </button>
+                        <button className="boton-icono peligro" title="Eliminar" onClick={(e) => eliminar(e, c)}>
+                          {ICONO_BASURERO}
+                        </button>
+                      </td>
                     </tr>
                   ))}
                 </tbody>
@@ -199,6 +262,7 @@ function Clientes() {
                 total={total}
                 tamano={TAMANO_PAGINA}
                 cantidadFilas={clientes.length}
+                elementos="clientes"
                 alCambiar={cambiarPagina}
               />
             </>
@@ -208,6 +272,14 @@ function Clientes() {
 
       {clienteId !== null && (
         <DetalleCliente clienteId={clienteId} alCerrar={() => setClienteId(null)} />
+      )}
+
+      {formularioAbierto && (
+        <FormularioCliente
+          clienteId={clienteEditarId}
+          alCerrar={() => setFormularioAbierto(false)}
+          alGuardar={alGuardar}
+        />
       )}
     </>
   );

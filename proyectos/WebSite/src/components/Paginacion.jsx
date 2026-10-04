@@ -1,7 +1,8 @@
 // Controles de paginacion al pie de la tabla.
 // Los datos ya vienen paginados desde el SP; aqui solo se calculan los numeros
 // de pagina para los botones y se avisa cual pagina se quiere ver.
-function Paginacion({ pagina, total, tamano, cantidadFilas, alCambiar }) {
+// elementos: palabra que se muestra en el texto, por ejemplo "clientes" o "proveedores"
+function Paginacion({ pagina, total, tamano, cantidadFilas, elementos, alCambiar }) {
   const totalPaginas = Math.ceil(total / tamano);
 
   // rango que se esta mostrando, por ejemplo "11-20"
@@ -23,7 +24,7 @@ function Paginacion({ pagina, total, tamano, cantidadFilas, alCambiar }) {
   return (
     <div className="paginacion">
       <span className="paginacion-texto">
-        Mostrando {desde}-{hasta} de {total} clientes
+        Mostrando {desde}-{hasta} de {total} {elementos}
       </span>
 
       <div className="paginacion-botones">

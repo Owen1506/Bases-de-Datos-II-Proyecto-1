@@ -1,4 +1,11 @@
+-- 04_sp_proveedores.sql
+-- SP del modulo de proveedores
 USE WideWorldImporters;
+GO
+
+-- Opciones que SQL Server exige para tablas con columnas calculadas o indices filtrados
+SET ANSI_NULLS ON;
+SET QUOTED_IDENTIFIER ON;
 GO
 
 CREATE OR ALTER PROCEDURE dbo.usp_Proveedores_Listar
@@ -77,7 +84,7 @@ BEGIN
         s.DeliveryLocation.Lat AS Latitud,
         s.DeliveryLocation.Long AS Longitud,
 
-        s.BankAccountName AS NombreBanco,
+        s.BankAccountBranch AS NombreBanco, -- BankAccountName es el titular, el banco esta en BankAccountBranch
         s.BankAccountNumber AS NumeroCuenta,
 
         s.PaymentDays AS DiasPago

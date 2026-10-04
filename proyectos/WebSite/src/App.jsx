@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import Pestanas from './components/Pestanas';
 import Clientes from './pages/Clientes';
+import Proveedores from './pages/Proveedores';
 
 // Modulos del sitio, cada uno es una pestaña
 const MODULOS = [
@@ -12,7 +13,6 @@ const MODULOS = [
 ];
 
 function App() {
-  // guarda el id de la pestaña que esta abierta
   const [moduloActivo, setModuloActivo] = useState('clientes');
 
   // Decide que pagina mostrar segun la pestaña activa.
@@ -20,6 +20,9 @@ function App() {
   function mostrarModulo() {
     if (moduloActivo === 'clientes') {
       return <Clientes />;
+    }
+    if (moduloActivo === 'proveedores') {
+      return <Proveedores />;
     }
     return <div className="mensaje info">Módulo en construcción.</div>;
   }

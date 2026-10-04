@@ -1,4 +1,11 @@
+-- 05_sp_inventario.sql
+-- SP del modulo de inventario
 USE WideWorldImporters;
+GO
+
+-- Opciones que SQL Server exige para tablas con columnas calculadas o indices filtrados
+SET ANSI_NULLS ON;
+SET QUOTED_IDENTIFIER ON;
 GO
 
 CREATE OR ALTER PROCEDURE dbo.usp_Inventario_Listar

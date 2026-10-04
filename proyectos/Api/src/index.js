@@ -5,23 +5,31 @@ const express = require('express');
 const cors = require('cors');
 
 const clientes = require('./routes/clientes');
+const proveedores = require('./routes/proveedores');
 const catalogos = require('./routes/catalogos');
 
 const app = express();
 const PUERTO = 3000;
 
 app.use(cors());
+app.use(express.json()); // para leer el cuerpo JSON de los POST y PUT
 
 app.use('/api/clientes', clientes);
+app.use('/api/proveedores', proveedores);
 app.use('/api/catalogos', catalogos);
 
-// Si la ruta no existe
+// Ruta no encontrada
 app.use((req, res) => {
   res.status(404).json({ mensaje: 'Ruta no encontrada.' });
 });
 
 // Si algo falla en una ruta (por ejemplo la base no responde) cae aqui
 app.use((err, req, res, next) => {
+  // Los errores de los SP con THROW 50001, 50002... traen un mensaje para el usuario
+  if (err.number >= 50000) {
+    return res.status(400).json({ mensaje: err.message });
+  }
+
   console.error(err);
   res.status(500).json({ mensaje: 'Ocurrió un error al consultar la base de datos.' });
 });
