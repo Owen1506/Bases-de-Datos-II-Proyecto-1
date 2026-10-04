@@ -1,4 +1,12 @@
+-- 06_sp_ventas.sql
+-- SP del modulo de ventas
 USE WideWorldImporters;
+GO
+
+-- Opciones que SQL Server exige para tablas con columnas calculadas o indices filtrados
+-- (Invoices tiene una columna calculada; sin esto insertar o eliminar facturas falla)
+SET ANSI_NULLS ON;
+SET QUOTED_IDENTIFIER ON;
 GO
 
 CREATE OR ALTER PROCEDURE dbo.usp_Ventas_Listar
