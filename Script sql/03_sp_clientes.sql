@@ -4,10 +4,13 @@ USE WideWorldImporters;
 GO
 
 -- Lista de clientes, los filtros son opcionales
+-- Devuelve solo una pagina de resultados y en TotalRegistros el total que cumple los filtros
 CREATE OR ALTER PROCEDURE dbo.usp_Clientes_Listar
     @Nombre NVARCHAR(100) = NULL,
     @CategoriaID INT = NULL,
-    @MetodoEntregaID INT = NULL
+    @MetodoEntregaID INT = NULL,
+    @Pagina INT = 1,
+    @TamanoPagina INT = 10
 AS
 BEGIN
     SET NOCOUNT ON;
@@ -15,17 +18,23 @@ BEGIN
     -- si viene vacio es como no filtrar
     IF @Nombre = '' SET @Nombre = NULL;
 
+    IF @Pagina < 1 SET @Pagina = 1;
+    IF @TamanoPagina < 1 SET @TamanoPagina = 10;
+
     SELECT c.CustomerID AS ClienteID,
            c.CustomerName AS Nombre,
            cc.CustomerCategoryName AS Categoria,
-           dm.DeliveryMethodName AS MetodoEntrega
+           dm.DeliveryMethodName AS MetodoEntrega,
+           COUNT(*) OVER () AS TotalRegistros
     FROM syn.Customers c
     JOIN syn.CustomerCategories cc ON cc.CustomerCategoryID = c.CustomerCategoryID
     JOIN syn.DeliveryMethods dm ON dm.DeliveryMethodID = c.DeliveryMethodID
     WHERE (@Nombre IS NULL OR c.CustomerName LIKE '%' + @Nombre + '%')
       AND (@CategoriaID IS NULL OR c.CustomerCategoryID = @CategoriaID)
       AND (@MetodoEntregaID IS NULL OR c.DeliveryMethodID = @MetodoEntregaID)
-    ORDER BY c.CustomerName;
+    ORDER BY c.CustomerName
+    OFFSET (@Pagina - 1) * @TamanoPagina ROWS
+    FETCH NEXT @TamanoPagina ROWS ONLY;
 END;
 GO
 
