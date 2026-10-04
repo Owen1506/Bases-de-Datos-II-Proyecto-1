@@ -17,6 +17,10 @@ router.get('/grupos-compra', async (req, res) => {
   res.json(await ejecutarSP('dbo.usp_Catalogo_GruposCompra'));
 });
 
+router.get('/categorias-proveedor', async (req, res) => {
+  res.json(await ejecutarSP('dbo.usp_Catalogo_CategoriasProveedor'));
+});
+
 // Buscadores: reciben ?texto= y devuelven las primeras 20 coincidencias.
 // Si el texto tiene menos de 2 letras no se consulta la base.
 

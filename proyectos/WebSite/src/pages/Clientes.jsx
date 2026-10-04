@@ -7,15 +7,6 @@ import Paginacion from '../components/Paginacion';
 // Cantidad de clientes por pagina. Debe ser igual al @TamanoPagina por defecto del SP.
 const TAMANO_PAGINA = 10;
 
-// Color del badge segun la categoria (solo es presentacion)
-const COLORES_CATEGORIA = {
-  'Novelty Shop': 'badge-naranja',
-  'Supermarket': 'badge-verde',
-  'Computer Store': 'badge-azul',
-  'Gift Store': 'badge-morado',
-  'Corporate': 'badge-gris'
-};
-
 const FILTROS_VACIOS = { nombre: '', categoriaId: '', metodoEntregaId: '' };
 
 // Iconos de los botones de editar y eliminar (dibujados con SVG)
@@ -40,11 +31,9 @@ function Clientes() {
   // filtros de la ultima busqueda, se usan al cambiar de pagina
   const [filtrosAplicados, setFiltrosAplicados] = useState(FILTROS_VACIOS);
 
-  // opciones de los selects
   const [categorias, setCategorias] = useState([]);
   const [metodos, setMetodos] = useState([]);
 
-  // resultados
   const [clientes, setClientes] = useState([]);
   const [pagina, setPagina] = useState(1);
   const [total, setTotal] = useState(0);
@@ -54,11 +43,9 @@ function Clientes() {
   // cliente seleccionado en la tabla (null = ventana de detalle cerrada)
   const [clienteId, setClienteId] = useState(null);
 
-  // formulario de crear/editar
   const [formularioAbierto, setFormularioAbierto] = useState(false);
   const [clienteEditarId, setClienteEditarId] = useState(null); // null = cliente nuevo
 
-  // mensaje verde despues de crear, editar o eliminar
   const [exito, setExito] = useState('');
 
   async function cargarCatalogos() {
@@ -251,12 +238,12 @@ function Clientes() {
                     <tr key={c.ClienteID} onClick={() => setClienteId(c.ClienteID)}>
                       <td>{c.Nombre}</td>
                       <td>
-                        <span className={'badge ' + (COLORES_CATEGORIA[c.Categoria] || 'badge-gris')}>
+                        <span className="badge">
                           {c.Categoria}
                         </span>
                       </td>
                       <td>{c.MetodoEntrega}</td>
-                      {/* estos botones solo se ven al pasar el mouse por la fila (ver styles.css) */}
+                      {/* estos botones solo se ven al pasar el mouse por la fila (ver styles/tabla.css) */}
                       <td className="acciones">
                         <button className="boton-icono" title="Editar" onClick={(e) => abrirEditar(e, c.ClienteID)}>
                           {ICONO_LAPIZ}
@@ -275,6 +262,7 @@ function Clientes() {
                 total={total}
                 tamano={TAMANO_PAGINA}
                 cantidadFilas={clientes.length}
+                elementos="clientes"
                 alCambiar={cambiarPagina}
               />
             </>

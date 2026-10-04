@@ -3,6 +3,11 @@
 USE WideWorldImporters;
 GO
 
+-- Opciones que SQL Server exige para tablas con columnas calculadas o indices filtrados
+SET ANSI_NULLS ON;
+SET QUOTED_IDENTIFIER ON;
+GO
+
 CREATE OR ALTER PROCEDURE dbo.usp_Catalogo_CategoriasCliente
 AS
 BEGIN
@@ -77,6 +82,19 @@ BEGIN
     FROM syn.Customers
     WHERE CustomerName LIKE '%' + @Texto + '%'
     ORDER BY CustomerName;
+END;
+GO
+
+-- Catalogos de proveedores
+
+CREATE OR ALTER PROCEDURE dbo.usp_Catalogo_CategoriasProveedor
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    SELECT SupplierCategoryID AS CategoriaID, SupplierCategoryName AS Categoria
+    FROM syn.SupplierCategories
+    ORDER BY SupplierCategoryName;
 END;
 GO
 

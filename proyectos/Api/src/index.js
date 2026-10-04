@@ -5,6 +5,7 @@ const express = require('express');
 const cors = require('cors');
 
 const clientes = require('./routes/clientes');
+const proveedores = require('./routes/proveedores');
 const catalogos = require('./routes/catalogos');
 
 const app = express();
@@ -14,9 +15,10 @@ app.use(cors());
 app.use(express.json()); // para leer el cuerpo JSON de los POST y PUT
 
 app.use('/api/clientes', clientes);
+app.use('/api/proveedores', proveedores);
 app.use('/api/catalogos', catalogos);
 
-// Si la ruta no existe
+// Ruta no encontrada
 app.use((req, res) => {
   res.status(404).json({ mensaje: 'Ruta no encontrada.' });
 });

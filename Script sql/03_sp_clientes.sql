@@ -3,6 +3,11 @@
 USE WideWorldImporters;
 GO
 
+-- Opciones que SQL Server exige para tablas con columnas calculadas o indices filtrados
+SET ANSI_NULLS ON;
+SET QUOTED_IDENTIFIER ON;
+GO
+
 -- Lista de clientes, los filtros son opcionales
 -- Devuelve solo una pagina de resultados y en TotalRegistros el total que cumple los filtros
 CREATE OR ALTER PROCEDURE dbo.usp_Clientes_Listar
