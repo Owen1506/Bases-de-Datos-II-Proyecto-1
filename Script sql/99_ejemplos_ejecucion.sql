@@ -100,6 +100,8 @@ EXEC dbo.usp_Inventario_Listar;
 EXEC dbo.usp_Inventario_Listar @Nombre = 'usb';
 EXEC dbo.usp_Inventario_Listar @GrupoID = 4;
 EXEC dbo.usp_Inventario_Listar @Nombre = 'shirt', @GrupoID = 4, @Pagina = 2;
+EXEC dbo.usp_Inventario_Listar @CantidadMax = 999;
+EXEC dbo.usp_Inventario_Listar @Nombre = 'shirt', @GrupoID = 4, @CantidadMin = 1000, @CantidadMax = 100000;
 EXEC dbo.usp_Inventario_Detalle @ProductoID = 1;
 GO
 
@@ -123,4 +125,19 @@ EXEC dbo.usp_Inventario_Eliminar @ProductoID = @idProducto;
 
 -- Este falla a proposito: el producto 1 tiene ventas y ordenes asociadas
 EXEC dbo.usp_Inventario_Eliminar @ProductoID = 1;
+GO
+
+-- Ventas
+EXEC dbo.usp_Ventas_Listar;
+EXEC dbo.usp_Ventas_Listar @NombreCliente = 'dinh';
+EXEC dbo.usp_Ventas_Listar @FechaInicio = '2015-01-01', @FechaFin = '2015-12-31';
+EXEC dbo.usp_Ventas_Listar @MontoMin = 1000, @MontoMax = 5000;
+EXEC dbo.usp_Ventas_Listar @NombreCliente = 'dinh', @FechaInicio = '2015-01-01', @FechaFin = '2015-12-31',
+    @MontoMin = 1000, @Pagina = 2;
+EXEC dbo.usp_Ventas_Detalle @FacturaID = 1;
+EXEC dbo.usp_Ventas_DetalleLineas @FacturaID = 1;
+GO
+
+-- Este falla a proposito: la fecha inicial es mayor que la final
+EXEC dbo.usp_Ventas_Listar @FechaInicio = '2015-12-31', @FechaFin = '2015-01-01';
 GO

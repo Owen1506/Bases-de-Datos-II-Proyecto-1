@@ -4,6 +4,7 @@ import Clientes from './pages/Clientes';
 import Proveedores from './pages/Proveedores';
 import Estadisticas from './pages/Estadisticas';
 import Inventario from './pages/Inventario';
+import Ventas from './pages/Ventas';
 
 // Modulos del sitio, cada uno es una pestaña
 const MODULOS = [
@@ -26,10 +27,14 @@ function App() {
     if (moduloActivo === 'proveedores') {
       return <Proveedores />;
     }
-    if (moduloActivo === 'estadisticas') {
-      return <Estadisticas />;
     if (moduloActivo === 'inventario') {
       return <Inventario />;
+    }
+    if (moduloActivo === 'ventas') {
+      return <Ventas />;
+    }
+    if (moduloActivo === 'estadisticas') {
+      return <Estadisticas />;
     }
     return <div className="mensaje info">Módulo en construcción.</div>;
   }

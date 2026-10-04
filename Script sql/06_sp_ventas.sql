@@ -26,6 +26,17 @@ BEGIN
     IF @Pagina < 1
         SET @Pagina = 1;
 
+    -- los rangos deben tener sentido
+    IF @FechaInicio IS NOT NULL AND @FechaFin IS NOT NULL AND @FechaInicio > @FechaFin
+    BEGIN
+        THROW 50011, 'La fecha inicial no puede ser mayor que la fecha final.', 1;
+    END;
+
+    IF @MontoMin IS NOT NULL AND @MontoMax IS NOT NULL AND @MontoMin > @MontoMax
+    BEGIN
+        THROW 50012, 'El monto mínimo no puede ser mayor que el monto máximo.', 1;
+    END;
+
     DECLARE @TamanoPagina INT = 10;
 
     SELECT
