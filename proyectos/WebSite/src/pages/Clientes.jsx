@@ -1,26 +1,15 @@
 import { useEffect, useState } from 'react';
 import { consultar, enviar } from '../api';
+import Buscador from '../components/Buscador';
 import DetalleCliente from '../components/DetalleCliente';
 import FormularioCliente from '../components/FormularioCliente';
 import Paginacion from '../components/Paginacion';
+import { ICONO_BASURERO, ICONO_LAPIZ } from '../components/Iconos';
 
 // Cantidad de clientes por pagina. Debe ser igual al @TamanoPagina por defecto del SP.
 const TAMANO_PAGINA = 10;
 
 const FILTROS_VACIOS = { nombre: '', categoriaId: '', metodoEntregaId: '' };
-
-// Iconos de los botones de editar y eliminar (dibujados con SVG)
-const ICONO_LAPIZ = (
-  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <path d="M17 3a2.83 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z" />
-  </svg>
-);
-const ICONO_BASURERO = (
-  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <polyline points="3 6 5 6 21 6" />
-    <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
-  </svg>
-);
 
 function Clientes() {
   // lo que el usuario va escribiendo en los filtros
@@ -42,6 +31,9 @@ function Clientes() {
 
   // cliente seleccionado en la tabla (null = ventana de detalle cerrada)
   const [clienteId, setClienteId] = useState(null);
+
+  // cambia cada vez que se restauran los filtros, para vaciar el buscador de nombre
+  const [reinicios, setReinicios] = useState(0);
 
   const [formularioAbierto, setFormularioAbierto] = useState(false);
   const [clienteEditarId, setClienteEditarId] = useState(null); // null = cliente nuevo
@@ -107,6 +99,7 @@ function Clientes() {
 
   function restaurar() {
     setNombre('');
+    setReinicios(reinicios + 1);
     setCategoriaId('');
     setMetodoEntregaId('');
     setExito('');
@@ -169,16 +162,18 @@ function Clientes() {
         <form className="panel panel-filtros" onSubmit={alBuscar}>
           <h3>Filtros</h3>
 
-          <label>
-            Nombre del cliente
-            <input
-              type="text"
-              value={nombre}
-              maxLength={100}
-              placeholder="Escriba parte del nombre"
-              onChange={(e) => setNombre(e.target.value)}
-            />
-          </label>
+          {/* Texto libre con sugerencias: no hace falta elegir una, se busca con lo escrito.
+              El key cambia al restaurar los filtros y eso vacia el campo */}
+          <Buscador
+            key={reinicios}
+            etiqueta="Nombre del cliente"
+            ruta="/catalogos/clientes"
+            campoId="ClienteID"
+            campoTexto="Cliente"
+            textoInicial=""
+            placeholder="Escriba parte del nombre"
+            alElegir={(id, texto) => setNombre(texto)}
+          />
 
           <label>
             Categoría

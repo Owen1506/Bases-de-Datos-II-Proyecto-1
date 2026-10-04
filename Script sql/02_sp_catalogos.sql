@@ -85,6 +85,34 @@ BEGIN
 END;
 GO
 
+-- Buscadores para las sugerencias del filtro de nombre de proveedores e inventario
+
+CREATE OR ALTER PROCEDURE dbo.usp_Catalogo_BuscarProveedores
+    @Texto NVARCHAR(50)
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    SELECT TOP 20 SupplierID AS ProveedorID, SupplierName AS Proveedor
+    FROM syn.Suppliers
+    WHERE SupplierName LIKE '%' + @Texto + '%'
+    ORDER BY SupplierName;
+END;
+GO
+
+CREATE OR ALTER PROCEDURE dbo.usp_Catalogo_BuscarProductos
+    @Texto NVARCHAR(50)
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    SELECT TOP 20 StockItemID AS ProductoID, StockItemName AS Producto
+    FROM syn.StockItems
+    WHERE StockItemName LIKE '%' + @Texto + '%'
+    ORDER BY StockItemName;
+END;
+GO
+
 -- Catalogos de proveedores
 
 CREATE OR ALTER PROCEDURE dbo.usp_Catalogo_CategoriasProveedor

@@ -33,6 +33,11 @@
   cursor: pointer;
 }
 
+/* Columnas con numeros: alineadas a la derecha para comparar cantidades */
+.tabla .numero {
+  text-align: right;
+}
+
 .tabla tbody tr:hover {
   background-color: var(--azul-claro);
 }

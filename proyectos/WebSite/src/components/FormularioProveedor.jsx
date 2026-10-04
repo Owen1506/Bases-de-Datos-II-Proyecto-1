@@ -3,14 +3,15 @@ import { consultar, enviar } from '../api';
 import Buscador from './Buscador';
 import { codigoPostalValido, sitioWebValido } from '../validaciones';
 
-// Valores de un formulario vacio (cliente nuevo)
+// Valores de un formulario vacio (proveedor nuevo)
 const DATOS_VACIOS = {
   Nombre: '',
+  ReferenciaProveedor: '',
   CategoriaID: '',
-  GrupoCompraID: '',
-  ClienteFacturarID: null,
   MetodoEntregaID: '',
   DiasPago: '',
+  NombreBanco: '',
+  NumeroCuenta: '',
   ContactoPrimarioID: null,
   ContactoAlternativoID: null,
   Telefono: '',
@@ -28,10 +29,15 @@ const DATOS_VACIOS = {
   Longitud: ''
 };
 
-// Ventana con el formulario de cliente.
-// Si clienteId es null se crea un cliente nuevo; si tiene valor se edita ese cliente.
-function FormularioCliente({ clienteId, alCerrar, alGuardar }) {
-  const esNuevo = clienteId === null;
+// Cambia null por '' para que los campos de texto no den error
+function textoOVacio(valor) {
+  return valor === null ? '' : valor;
+}
+
+// Ventana con el formulario de proveedor.
+// Si proveedorId es null se crea un proveedor nuevo; si tiene valor se edita ese proveedor.
+function FormularioProveedor({ proveedorId, alCerrar, alGuardar }) {
+  const esNuevo = proveedorId === null;
 
   const [datos, setDatos] = useState(DATOS_VACIOS);
   // textos que se muestran en los buscadores al editar (nombre de la ciudad, persona...)
@@ -39,51 +45,48 @@ function FormularioCliente({ clienteId, alCerrar, alGuardar }) {
 
   const [categorias, setCategorias] = useState([]);
   const [metodos, setMetodos] = useState([]);
-  const [grupos, setGrupos] = useState([]);
 
   const [cargando, setCargando] = useState(true);
   const [guardando, setGuardando] = useState(false);
   const [error, setError] = useState('');
 
-  // Carga los selects y, si se esta editando, los datos actuales del cliente
+  // Carga los selects y, si se esta editando, los datos actuales del proveedor
   async function cargar() {
     try {
-      setCategorias(await consultar('/catalogos/categorias-cliente'));
+      setCategorias(await consultar('/catalogos/categorias-proveedor'));
       setMetodos(await consultar('/catalogos/metodos-entrega'));
-      setGrupos(await consultar('/catalogos/grupos-compra'));
 
       if (!esNuevo) {
-        const c = await consultar('/clientes/' + clienteId);
+        const p = await consultar('/proveedores/' + proveedorId);
         setDatos({
-          Nombre: c.Nombre,
-          CategoriaID: c.CategoriaID,
-          GrupoCompraID: c.GrupoCompraID === null ? '' : c.GrupoCompraID,
-          // si se factura a si mismo el campo queda vacio
-          ClienteFacturarID: c.ClienteFacturarID === c.ClienteID ? null : c.ClienteFacturarID,
-          MetodoEntregaID: c.MetodoEntregaID,
-          DiasPago: c.DiasPago,
-          ContactoPrimarioID: c.ContactoPrimarioID,
-          ContactoAlternativoID: c.ContactoAlternativoID,
-          Telefono: c.Telefono,
-          Fax: c.Fax,
-          SitioWeb: c.SitioWeb,
-          DireccionEntrega1: c.DireccionEntrega1,
-          DireccionEntrega2: c.DireccionEntrega2 === null ? '' : c.DireccionEntrega2,
-          CiudadEntregaID: c.CiudadEntregaID,
-          CodigoPostalEntrega: c.CodigoPostalEntrega,
-          DireccionPostal1: c.DireccionPostal1,
-          DireccionPostal2: c.DireccionPostal2 === null ? '' : c.DireccionPostal2,
-          CiudadPostalID: c.CiudadPostalID,
-          CodigoPostalPostal: c.CodigoPostalPostal,
-          Latitud: c.Latitud === null ? '' : c.Latitud,
-          Longitud: c.Longitud === null ? '' : c.Longitud
+          Nombre: p.Nombre,
+          ReferenciaProveedor: textoOVacio(p.CodigoProveedor),
+          CategoriaID: p.CategoriaID,
+          MetodoEntregaID: textoOVacio(p.MetodoEntregaID),
+          DiasPago: p.DiasPago,
+          NombreBanco: textoOVacio(p.NombreBanco),
+          NumeroCuenta: textoOVacio(p.NumeroCuenta),
+          ContactoPrimarioID: p.ContactoPrimarioID,
+          ContactoAlternativoID: p.ContactoAlternativoID,
+          Telefono: p.Telefono,
+          Fax: p.Fax,
+          SitioWeb: p.SitioWeb,
+          DireccionEntrega1: p.DireccionEntrega1,
+          DireccionEntrega2: textoOVacio(p.DireccionEntrega2),
+          CiudadEntregaID: p.CiudadEntregaID,
+          CodigoPostalEntrega: p.CodigoPostalEntrega,
+          DireccionPostal1: p.DireccionPostal1,
+          DireccionPostal2: textoOVacio(p.DireccionPostal2),
+          CiudadPostalID: p.CiudadPostalID,
+          CodigoPostalPostal: p.CodigoPostalPostal,
+          Latitud: textoOVacio(p.Latitud),
+          Longitud: textoOVacio(p.Longitud)
         });
         setTextos({
-          ClienteFacturar: c.ClienteFacturarID === c.ClienteID ? '' : c.ClienteFacturar,
-          ContactoPrimario: c.ContactoPrimario,
-          ContactoAlternativo: c.ContactoAlternativo === null ? '' : c.ContactoAlternativo,
-          CiudadEntrega: c.CiudadEntrega + ', ' + c.ProvinciaEntrega,
-          CiudadPostal: c.CiudadPostal + ', ' + c.ProvinciaPostal
+          ContactoPrimario: p.ContactoPrimario,
+          ContactoAlternativo: p.ContactoAlternativo,
+          CiudadEntrega: p.CiudadEntrega + ', ' + p.ProvinciaEntrega,
+          CiudadPostal: p.CiudadPostal + ', ' + p.ProvinciaPostal
         });
       }
     } catch (e) {
@@ -101,31 +104,13 @@ function FormularioCliente({ clienteId, alCerrar, alGuardar }) {
     setDatos({ ...datos, [campo]: valor });
   }
 
-  // Para los buscadores opcionales se guarda tambien lo escrito,
-  // asi se puede avisar si quedo texto sin elegir una opcion de la lista
-  function elegirOpcional(campoId, campoTexto, id, texto) {
-    setDatos({ ...datos, [campoId]: id });
-    setTextos({ ...textos, [campoTexto]: texto });
-  }
-
-  // true si en un buscador opcional se escribio algo pero no se eligio de la lista
-  function quedoSinElegir(id, texto) {
-    return id === null && texto !== undefined && texto.trim() !== '';
-  }
-
   // Revisa los datos antes de enviarlos. Devuelve el mensaje de error o '' si todo esta bien.
   function validar() {
-    if (datos.Nombre.trim() === '') return 'Escriba el nombre del cliente.';
+    if (datos.Nombre.trim() === '') return 'Escriba el nombre del proveedor.';
     if (datos.CategoriaID === '') return 'Seleccione una categoría.';
-    if (quedoSinElegir(datos.ClienteFacturarID, textos.ClienteFacturar)) {
-      return 'Elija de la lista el cliente por facturar, o deje el campo vacío si se factura a sí mismo.';
-    }
-    if (datos.MetodoEntregaID === '') return 'Seleccione un método de entrega.';
     if (datos.DiasPago === '' || Number(datos.DiasPago) < 0) return 'Los días de gracia deben ser 0 o más.';
     if (datos.ContactoPrimarioID === null) return 'Elija de la lista el contacto primario.';
-    if (quedoSinElegir(datos.ContactoAlternativoID, textos.ContactoAlternativo)) {
-      return 'Elija de la lista el contacto alternativo, o deje el campo vacío.';
-    }
+    if (datos.ContactoAlternativoID === null) return 'Elija de la lista el contacto alternativo.';
     if (datos.Telefono.trim() === '') return 'Escriba el teléfono.';
     if (datos.Fax.trim() === '') return 'Escriba el fax.';
     if (datos.SitioWeb.trim() === '') return 'Escriba el sitio web.';
@@ -154,13 +139,13 @@ function FormularioCliente({ clienteId, alCerrar, alGuardar }) {
     try {
       let respuesta;
       if (esNuevo) {
-        respuesta = await enviar('/clientes', 'POST', datos);
+        respuesta = await enviar('/proveedores', 'POST', datos);
       } else {
-        respuesta = await enviar('/clientes/' + clienteId, 'PUT', datos);
+        respuesta = await enviar('/proveedores/' + proveedorId, 'PUT', datos);
       }
       alGuardar(respuesta.mensaje);
     } catch (e) {
-      // errores de la API o del SP, por ejemplo "Ya existe un cliente con ese nombre."
+      // errores de la API o del SP, por ejemplo "Ya existe un proveedor con ese nombre."
       setError(e.message);
     }
     setGuardando(false);
@@ -170,7 +155,7 @@ function FormularioCliente({ clienteId, alCerrar, alGuardar }) {
     <div className="fondo-ventana">
       <form className="ventana ventana-formulario" onSubmit={guardar}>
         <div className="ventana-titulo">
-          <h3>{esNuevo ? 'Nuevo cliente' : 'Editar cliente'}</h3>
+          <h3>{esNuevo ? 'Nuevo proveedor' : 'Editar proveedor'}</h3>
           <button type="button" className="boton-cerrar" onClick={alCerrar}>✕</button>
         </div>
 
@@ -183,10 +168,16 @@ function FormularioCliente({ clienteId, alCerrar, alGuardar }) {
             <>
               <h4>Datos generales</h4>
               <div className="campos">
-                <label className="campo-ancho">
+                <label>
                   <span>Nombre <span className="obligatorio">*</span></span>
                   <input type="text" maxLength={100} value={datos.Nombre}
                     onChange={(e) => cambiar('Nombre', e.target.value)} />
+                </label>
+
+                <label>
+                  Código del proveedor
+                  <input type="text" maxLength={20} value={datos.ReferenciaProveedor}
+                    onChange={(e) => cambiar('ReferenciaProveedor', e.target.value)} />
                 </label>
 
                 <label>
@@ -200,33 +191,28 @@ function FormularioCliente({ clienteId, alCerrar, alGuardar }) {
                 </label>
 
                 <label>
-                  Grupo de compra
-                  <select value={datos.GrupoCompraID} onChange={(e) => cambiar('GrupoCompraID', e.target.value)}>
-                    <option value="">Ninguno</option>
-                    {grupos.map((g) => (
-                      <option key={g.GrupoCompraID} value={g.GrupoCompraID}>{g.GrupoCompra}</option>
-                    ))}
-                  </select>
-                </label>
-
-                <Buscador
-                  etiqueta="Cliente por facturar"
-                  ruta="/catalogos/clientes"
-                  campoId="ClienteID"
-                  campoTexto="Cliente"
-                  textoInicial={textos.ClienteFacturar || ''}
-                  alElegir={(id, texto) => elegirOpcional('ClienteFacturarID', 'ClienteFacturar', id, texto)}
-                  ayuda="Déjelo vacío si se factura a sí mismo. Si elige otro, debe ser del mismo grupo de compra."
-                />
-
-                <label>
-                  <span>Método de entrega <span className="obligatorio">*</span></span>
+                  Método de entrega
                   <select value={datos.MetodoEntregaID} onChange={(e) => cambiar('MetodoEntregaID', e.target.value)}>
-                    <option value="">Seleccione...</option>
+                    <option value="">Ninguno</option>
                     {metodos.map((m) => (
                       <option key={m.MetodoEntregaID} value={m.MetodoEntregaID}>{m.MetodoEntrega}</option>
                     ))}
                   </select>
+                </label>
+              </div>
+
+              <h4>Pago</h4>
+              <div className="campos">
+                <label>
+                  Nombre del banco
+                  <input type="text" maxLength={50} value={datos.NombreBanco}
+                    onChange={(e) => cambiar('NombreBanco', e.target.value)} />
+                </label>
+
+                <label>
+                  Número de cuenta
+                  <input type="text" maxLength={20} value={datos.NumeroCuenta}
+                    onChange={(e) => cambiar('NumeroCuenta', e.target.value)} />
                 </label>
 
                 <label>
@@ -248,12 +234,12 @@ function FormularioCliente({ clienteId, alCerrar, alGuardar }) {
                 />
 
                 <Buscador
-                  etiqueta="Contacto alternativo"
+                  etiqueta="Contacto alternativo" obligatorio
                   ruta="/catalogos/personas"
                   campoId="PersonaID"
                   campoTexto="Persona"
                   textoInicial={textos.ContactoAlternativo || ''}
-                  alElegir={(id, texto) => elegirOpcional('ContactoAlternativoID', 'ContactoAlternativo', id, texto)}
+                  alElegir={(id) => cambiar('ContactoAlternativoID', id)}
                 />
 
                 <label>
@@ -365,4 +351,4 @@ function FormularioCliente({ clienteId, alCerrar, alGuardar }) {
   );
 }
 
-export default FormularioCliente;
+export default FormularioProveedor;

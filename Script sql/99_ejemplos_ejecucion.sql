@@ -10,6 +10,8 @@ EXEC dbo.usp_Catalogo_GruposCompra;
 EXEC dbo.usp_Catalogo_BuscarCiudades @Texto = 'Lisc';
 EXEC dbo.usp_Catalogo_BuscarPersonas @Texto = 'Waldemar';
 EXEC dbo.usp_Catalogo_BuscarClientes @Texto = 'Head Office';
+EXEC dbo.usp_Catalogo_BuscarProveedores @Texto = 'pub';
+EXEC dbo.usp_Catalogo_BuscarProductos @Texto = 'rc';
 
 -- Clientes
 EXEC dbo.usp_Clientes_Listar;
@@ -55,4 +57,70 @@ EXEC dbo.usp_Clientes_Insertar
     @DiasPago = 7, @Telefono = '(308) 555-0199', @Fax = '(308) 555-0198', @SitioWeb = 'http://www.ejemplo.com',
     @DireccionEntrega1 = 'Shop 1', @CodigoPostalEntrega = '90410', @DireccionPostal1 = 'PO Box 1',
     @CodigoPostalPostal = '90410';
+GO
+
+-- Proveedores
+EXEC dbo.usp_Catalogo_CategoriasProveedor;
+EXEC dbo.usp_Proveedores_Listar;
+EXEC dbo.usp_Proveedores_Listar @Nombre = 'pub';
+EXEC dbo.usp_Proveedores_Listar @CategoriaID = 2;
+EXEC dbo.usp_Proveedores_Listar @Pagina = 2;
+EXEC dbo.usp_Proveedores_Detalle @ProveedorID = 2;
+GO
+
+-- CRUD de proveedores: se crea un proveedor, se edita y se elimina
+DECLARE @nuevoProveedor TABLE (ProveedorID INT);
+DECLARE @idProveedor INT;
+
+INSERT @nuevoProveedor EXEC dbo.usp_Proveedores_Insertar
+    @Nombre = 'Proveedor Ejemplo', @CategoriaID = 2, @ContactoPrimarioID = 1001, @ContactoAlternativoID = 1002,
+    @MetodoEntregaID = 7, @CiudadEntregaID = 19586, @CiudadPostalID = 19586, @NombreBanco = 'Woodgrove Bank Lisco',
+    @NumeroCuenta = '1234567890', @DiasPago = 30, @Telefono = '(308) 555-0111', @Fax = '(308) 555-0112',
+    @SitioWeb = 'http://www.proveedor.com', @DireccionEntrega1 = 'Suite 1', @CodigoPostalEntrega = '90410',
+    @DireccionPostal1 = 'PO Box 1', @CodigoPostalPostal = '90410';
+SELECT @idProveedor = ProveedorID FROM @nuevoProveedor;
+
+EXEC dbo.usp_Proveedores_Actualizar
+    @ProveedorID = @idProveedor, @Nombre = 'Proveedor Ejemplo Editado', @CategoriaID = 2, @ContactoPrimarioID = 1001,
+    @ContactoAlternativoID = 1002, @MetodoEntregaID = 7, @CiudadEntregaID = 19586, @CiudadPostalID = 19586,
+    @NombreBanco = 'Woodgrove Bank Lisco', @NumeroCuenta = '1234567890', @DiasPago = 45, @Telefono = '(308) 555-0111',
+    @Fax = '(308) 555-0112', @SitioWeb = 'http://www.proveedor.com', @DireccionEntrega1 = 'Suite 1',
+    @CodigoPostalEntrega = '90410', @DireccionPostal1 = 'PO Box 1', @CodigoPostalPostal = '90410';
+
+EXEC dbo.usp_Proveedores_Detalle @ProveedorID = @idProveedor;
+EXEC dbo.usp_Proveedores_Eliminar @ProveedorID = @idProveedor;
+
+-- Este falla a proposito: el proveedor 1 tiene productos y ordenes de compra
+EXEC dbo.usp_Proveedores_Eliminar @ProveedorID = 1;
+GO
+
+-- Inventario
+EXEC dbo.usp_Catalogo_GruposInventario;
+EXEC dbo.usp_Inventario_Listar;
+EXEC dbo.usp_Inventario_Listar @Nombre = 'usb';
+EXEC dbo.usp_Inventario_Listar @GrupoID = 4;
+EXEC dbo.usp_Inventario_Listar @Nombre = 'shirt', @GrupoID = 4, @Pagina = 2;
+EXEC dbo.usp_Inventario_Detalle @ProductoID = 1;
+GO
+
+-- CRUD de inventario: se crea un producto en dos grupos, se edita (queda en tres) y se elimina
+DECLARE @nuevoProducto TABLE (ProductoID INT);
+DECLARE @idProducto INT;
+
+INSERT @nuevoProducto EXEC dbo.usp_Inventario_Insertar
+    @Nombre = 'Producto Ejemplo', @ProveedorID = 1, @Grupos = '2,4', @UnidadEmpaqueID = 7, @EmpaqueExteriorID = 7,
+    @CantidadEmpaquetamiento = 1, @Impuesto = 15, @PrecioUnitario = 10, @Peso = 0.5, @CantidadDisponible = 100,
+    @Ubicacion = 'L-1', @DiasEntrega = 7, @EsRefrigerado = 0, @ComentariosMarketing = 'Producto de ejemplo';
+SELECT @idProducto = ProductoID FROM @nuevoProducto;
+
+EXEC dbo.usp_Inventario_Actualizar
+    @ProductoID = @idProducto, @Nombre = 'Producto Ejemplo', @ProveedorID = 1, @Grupos = '1,2,4', @UnidadEmpaqueID = 7,
+    @EmpaqueExteriorID = 7, @CantidadEmpaquetamiento = 1, @Impuesto = 15, @PrecioUnitario = 12, @Peso = 0.5,
+    @CantidadDisponible = 80, @Ubicacion = 'L-2', @DiasEntrega = 14, @EsRefrigerado = 0, @ComentariosMarketing = 'Producto de ejemplo';
+
+EXEC dbo.usp_Inventario_Detalle @ProductoID = @idProducto;
+EXEC dbo.usp_Inventario_Eliminar @ProductoID = @idProducto;
+
+-- Este falla a proposito: el producto 1 tiene ventas y ordenes asociadas
+EXEC dbo.usp_Inventario_Eliminar @ProductoID = 1;
 GO

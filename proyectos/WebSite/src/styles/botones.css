@@ -25,6 +25,19 @@
   cursor: default;
 }
 
+/* Boton que se ve como un enlace (por ejemplo el proveedor en el detalle de un producto) */
+.enlace {
+  background: none;
+  border: none;
+  padding: 0;
+  color: #0b57d0;
+  text-decoration: underline;
+  font-size: inherit;
+  font-family: inherit;
+  cursor: pointer;
+  text-align: left;
+}
+
 /* Botones pequeños con icono (editar y eliminar en la tabla) */
 .boton-icono {
   background: white;

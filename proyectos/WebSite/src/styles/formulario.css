@@ -33,10 +33,57 @@
   border-radius: 6px;
 }
 
+.campos textarea {
+  padding: clamp(4px, 0.5vw, 8px) clamp(8px, 0.8vw, 12px);
+  font-size: clamp(13px, 0.95vw, 15px);
+  font-family: inherit;
+  border: 1px solid var(--gris-borde);
+  border-radius: 6px;
+  resize: vertical;
+}
+
+/* Etiqueta de un campo que no es un label (por ejemplo la lista de casillas) */
+.etiqueta-campo {
+  display: block;
+  font-size: clamp(12px, 0.85vw, 13px);
+  color: #555;
+  margin-bottom: clamp(2px, 0.3vw, 4px);
+}
+
+/* Casillas de verificacion (grupos del producto, refrigerado) */
+.casillas {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(clamp(150px, 12vw, 190px), 1fr));
+  gap: clamp(4px, 0.5vw, 8px);
+}
+
+.campos .casilla,
+.casilla {
+  flex-direction: row;
+  align-items: center;
+  gap: clamp(4px, 0.5vw, 8px);
+  font-size: clamp(13px, 0.95vw, 15px);
+  color: var(--texto);
+  cursor: pointer;
+}
+
+.casilla input {
+  width: 16px;
+  height: 16px;
+  cursor: pointer;
+}
+
 .campos input:focus,
-.campos select:focus {
+.campos select:focus,
+.campos textarea:focus {
   outline: 2px solid var(--azul);
   border-color: transparent;
+}
+
+/* Asterisco de los campos obligatorios */
+.obligatorio {
+  color: #c62828;
+  font-weight: 600;
 }
 
 /* Texto de ayuda pequeño debajo de un campo */
