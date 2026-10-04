@@ -65,3 +65,11 @@ CREATE SYNONYM syn.Invoices FOR Sales.Invoices;
 DROP SYNONYM IF EXISTS syn.InvoiceLines;
 CREATE SYNONYM syn.InvoiceLines FOR Sales.InvoiceLines;
 GO
+
+-- Estadisticas
+DROP SYNONYM IF EXISTS syn.PurchaseOrders;
+CREATE SYNONYM syn.PurchaseOrders FOR Purchasing.PurchaseOrders;
+
+DROP SYNONYM IF EXISTS syn.PurchaseOrderLines;
+CREATE SYNONYM syn.PurchaseOrderLines FOR Purchasing.PurchaseOrderLines;
+GO

@@ -2,6 +2,7 @@ import { useState } from 'react';
 import Pestanas from './components/Pestanas';
 import Clientes from './pages/Clientes';
 import Proveedores from './pages/Proveedores';
+import Estadisticas from './pages/Estadisticas';
 import Inventario from './pages/Inventario';
 import Ventas from './pages/Ventas';
 
@@ -31,6 +32,9 @@ function App() {
     }
     if (moduloActivo === 'ventas') {
       return <Ventas />;
+    }
+    if (moduloActivo === 'estadisticas') {
+      return <Estadisticas />;
     }
     return <div className="mensaje info">Módulo en construcción.</div>;
   }
