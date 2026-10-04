@@ -72,7 +72,16 @@ BEGIN
            pci.CityName AS CiudadPostal,
            c.PostalPostalCode AS CodigoPostalPostal,
            c.DeliveryLocation.Lat AS Latitud,
-           c.DeliveryLocation.Long AS Longitud
+           c.DeliveryLocation.Long AS Longitud,
+           -- IDs para llenar el formulario de edicion
+           c.CustomerCategoryID AS CategoriaID,
+           c.BuyingGroupID AS GrupoCompraID,
+           c.PrimaryContactPersonID AS ContactoPrimarioID,
+           c.AlternateContactPersonID AS ContactoAlternativoID,
+           c.DeliveryMethodID AS MetodoEntregaID,
+           c.DeliveryCityID AS CiudadEntregaID,
+           c.PostalCityID AS CiudadPostalID,
+           psp.StateProvinceName AS ProvinciaPostal
     FROM syn.Customers c
     JOIN syn.CustomerCategories cc ON cc.CustomerCategoryID = c.CustomerCategoryID
     JOIN syn.DeliveryMethods dm ON dm.DeliveryMethodID = c.DeliveryMethodID
@@ -81,6 +90,7 @@ BEGIN
     JOIN syn.Cities dc ON dc.CityID = c.DeliveryCityID
     JOIN syn.StateProvinces dsp ON dsp.StateProvinceID = dc.StateProvinceID
     JOIN syn.Cities pci ON pci.CityID = c.PostalCityID
+    JOIN syn.StateProvinces psp ON psp.StateProvinceID = pci.StateProvinceID
     LEFT JOIN syn.BuyingGroups bg ON bg.BuyingGroupID = c.BuyingGroupID
     LEFT JOIN syn.People ac ON ac.PersonID = c.AlternateContactPersonID
     WHERE c.CustomerID = @ClienteID;
@@ -129,7 +139,7 @@ GO
 CREATE OR ALTER PROCEDURE dbo.usp_Clientes_Actualizar
     @ClienteID INT,
     @Nombre NVARCHAR(100),
-    @ClienteFacturarID INT,
+    @ClienteFacturarID INT = NULL,
     @CategoriaID INT,
     @GrupoCompraID INT = NULL,
     @ContactoPrimarioID INT,
@@ -163,6 +173,21 @@ BEGIN
         )
         BEGIN
             THROW 50001, 'El cliente indicado no existe.', 1;
+        END;
+
+        -- si no se indica a quien facturar, el cliente se factura a si mismo
+        IF @ClienteFacturarID IS NULL SET @ClienteFacturarID = @ClienteID;
+
+        -- si factura a otro cliente, ese cliente debe ser del mismo grupo de compra
+        IF @ClienteFacturarID <> @ClienteID
+           AND NOT EXISTS (
+               SELECT 1
+               FROM syn.Customers
+               WHERE CustomerID = @ClienteFacturarID
+                 AND BuyingGroupID = @GrupoCompraID
+           )
+        BEGIN
+            THROW 50004, 'El cliente por facturar debe pertenecer al mismo grupo de compra. Si el cliente no tiene grupo, deje el campo vacío.', 1;
         END;
 
         UPDATE syn.Customers
@@ -201,6 +226,12 @@ BEGIN
         IF @@TRANCOUNT > 0
             ROLLBACK TRANSACTION;
 
+        -- 2627 / 2601: el nombre del cliente ya existe (restriccion UNIQUE)
+        IF ERROR_NUMBER() IN (2627, 2601)
+        BEGIN
+            THROW 50003, 'Ya existe un cliente con ese nombre.', 1;
+        END;
+
         THROW;
     END CATCH;
 END;
@@ -208,7 +239,7 @@ GO
 -- SP Insertar
 CREATE OR ALTER PROCEDURE dbo.usp_Clientes_Insertar
     @Nombre NVARCHAR(100),
-    @ClienteFacturarID INT,
+    @ClienteFacturarID INT = NULL,
     @CategoriaID INT,
     @GrupoCompraID INT = NULL,
     @ContactoPrimarioID INT,
@@ -235,9 +266,29 @@ BEGIN
     DECLARE @NuevoCliente TABLE (
         ClienteID INT
     );
+    DECLARE @FacturarA INT;
 
     BEGIN TRY
         BEGIN TRANSACTION;
+
+        -- si factura a otro cliente, ese cliente debe ser del mismo grupo de compra
+        IF @ClienteFacturarID IS NOT NULL
+           AND NOT EXISTS (
+               SELECT 1
+               FROM syn.Customers
+               WHERE CustomerID = @ClienteFacturarID
+                 AND BuyingGroupID = @GrupoCompraID
+           )
+        BEGIN
+            THROW 50004, 'El cliente por facturar debe pertenecer al mismo grupo de compra. Si el cliente no tiene grupo, deje el campo vacío.', 1;
+        END;
+
+        -- Si no se indica a quien facturar, el cliente se factura a si mismo.
+        -- Como su ID todavia no existe, se guarda con un cliente cualquiera
+        -- y despues del INSERT se corrige (todo dentro de la misma transaccion).
+        SET @FacturarA = @ClienteFacturarID;
+        IF @FacturarA IS NULL
+            SELECT TOP 1 @FacturarA = CustomerID FROM syn.Customers ORDER BY CustomerID;
 
         INSERT INTO syn.Customers (
             CustomerName,
@@ -269,7 +320,7 @@ BEGIN
         OUTPUT INSERTED.CustomerID INTO @NuevoCliente
         VALUES (
             @Nombre,
-            @ClienteFacturarID,
+            @FacturarA,
             @CategoriaID,
             @GrupoCompraID,
             @ContactoPrimarioID,
@@ -299,6 +350,13 @@ BEGIN
             1
         );
 
+        IF @ClienteFacturarID IS NULL
+        BEGIN
+            UPDATE syn.Customers
+            SET BillToCustomerID = CustomerID
+            WHERE CustomerID = (SELECT ClienteID FROM @NuevoCliente);
+        END;
+
         COMMIT TRANSACTION;
 
         SELECT ClienteID
@@ -308,6 +366,12 @@ BEGIN
     BEGIN CATCH
         IF @@TRANCOUNT > 0
             ROLLBACK TRANSACTION;
+
+        -- 2627 / 2601: el nombre del cliente ya existe (restriccion UNIQUE)
+        IF ERROR_NUMBER() IN (2627, 2601)
+        BEGIN
+            THROW 50003, 'Ya existe un cliente con ese nombre.', 1;
+        END;
 
         THROW;
     END CATCH;

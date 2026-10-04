@@ -11,6 +11,7 @@ const app = express();
 const PUERTO = 3000;
 
 app.use(cors());
+app.use(express.json()); // para leer el cuerpo JSON de los POST y PUT
 
 app.use('/api/clientes', clientes);
 app.use('/api/catalogos', catalogos);
@@ -22,6 +23,11 @@ app.use((req, res) => {
 
 // Si algo falla en una ruta (por ejemplo la base no responde) cae aqui
 app.use((err, req, res, next) => {
+  // Los errores de los SP con THROW 50001, 50002... traen un mensaje para el usuario
+  if (err.number >= 50000) {
+    return res.status(400).json({ mensaje: err.message });
+  }
+
   console.error(err);
   res.status(500).json({ mensaje: 'Ocurrió un error al consultar la base de datos.' });
 });

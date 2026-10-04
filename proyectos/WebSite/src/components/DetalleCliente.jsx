@@ -115,7 +115,11 @@ function DetalleCliente({ clienteId, alCerrar }) {
               />
 
               <h4>Localización</h4>
-              <Mapa latitud={cliente.Latitud} longitud={cliente.Longitud} />
+              {cliente.Latitud !== null ? (
+                <Mapa latitud={cliente.Latitud} longitud={cliente.Longitud} />
+              ) : (
+                <div className="mensaje info">Este cliente no tiene una ubicación registrada.</div>
+              )}
             </>
           )}
         </div>
