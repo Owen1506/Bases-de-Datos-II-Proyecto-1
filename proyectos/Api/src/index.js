@@ -8,6 +8,7 @@ const clientes = require('./routes/clientes');
 const proveedores = require('./routes/proveedores');
 const inventario = require('./routes/inventario');
 const catalogos = require('./routes/catalogos');
+const estadisticas = require('./routes/estadisticas');
 
 const app = express();
 const PUERTO = 3000;
@@ -19,6 +20,7 @@ app.use('/api/clientes', clientes);
 app.use('/api/proveedores', proveedores);
 app.use('/api/inventario', inventario);
 app.use('/api/catalogos', catalogos);
+app.use('/api/estadisticas', estadisticas);
 
 // Ruta no encontrada
 app.use((req, res) => {

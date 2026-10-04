@@ -2,6 +2,7 @@ import { useState } from 'react';
 import Pestanas from './components/Pestanas';
 import Clientes from './pages/Clientes';
 import Proveedores from './pages/Proveedores';
+import Estadisticas from './pages/Estadisticas';
 import Inventario from './pages/Inventario';
 
 // Modulos del sitio, cada uno es una pestaña
@@ -25,6 +26,8 @@ function App() {
     if (moduloActivo === 'proveedores') {
       return <Proveedores />;
     }
+    if (moduloActivo === 'estadisticas') {
+      return <Estadisticas />;
     if (moduloActivo === 'inventario') {
       return <Inventario />;
     }
