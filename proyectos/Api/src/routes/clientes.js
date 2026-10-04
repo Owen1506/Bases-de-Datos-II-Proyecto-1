@@ -4,12 +4,17 @@ const { esEntero } = require('../validar');
 
 const router = express.Router();
 
-// GET /api/clientes?nombre=&categoriaId=&metodoEntregaId=
+// GET /api/clientes?nombre=&categoriaId=&metodoEntregaId=&pagina=
 router.get('/', async (req, res) => {
   // si un filtro no viene se manda null y el SP no lo toma en cuenta
   let nombre = req.query.nombre || null;
   let categoriaId = req.query.categoriaId || null;
   let metodoEntregaId = req.query.metodoEntregaId || null;
+  let pagina = req.query.pagina || 1;
+
+  if (!esEntero(pagina) || Number(pagina) < 1) {
+    return res.status(400).json({ mensaje: 'La página debe ser un número entero mayor que cero.' });
+  }
 
   if (categoriaId !== null) {
     if (!esEntero(categoriaId)) {
@@ -28,7 +33,8 @@ router.get('/', async (req, res) => {
   const filas = await ejecutarSP('dbo.usp_Clientes_Listar', {
     Nombre: nombre,
     CategoriaID: categoriaId,
-    MetodoEntregaID: metodoEntregaId
+    MetodoEntregaID: metodoEntregaId,
+    Pagina: Number(pagina)
   });
 
   res.json(filas);

@@ -6,6 +6,7 @@
   --gris-fondo: #f3f5f8;
   --gris-borde: #d5dbe3;
   --texto: #222;
+  --barra: #1e2a38;
 }
 
 * {
@@ -14,37 +15,71 @@
 
 body {
   margin: 0;
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: 'Segoe UI', Arial, Helvetica, sans-serif;
   background-color: var(--gris-fondo);
   color: var(--texto);
 }
 
-/* Barra superior */
-.encabezado {
-  background-color: var(--azul);
+/* ---------- Barra superior tipo ventana de Windows 11 ---------- */
+
+.barra-ventana {
+  background-color: var(--barra);
   color: white;
-  padding: 14px 24px;
+  padding: 10px 16px 0 16px;
+}
+
+.barra-titulo {
   display: flex;
-  align-items: baseline;
-  gap: 12px;
-  border-bottom: 4px solid var(--naranja);
-}
-
-.encabezado h1 {
-  margin: 0;
-  font-size: 22px;
-}
-
-.subtitulo {
+  align-items: center;
+  gap: 8px;
   font-size: 14px;
-  opacity: 0.8;
+  font-weight: 600;
+  margin-bottom: 10px;
 }
 
-/* Zona central de la pagina */
+/* ---------- Pestañas ---------- */
+
+.pestanas {
+  display: flex;
+  gap: 6px;
+  overflow-x: auto;
+}
+
+/* Pestañas inactivas: fondo un poco mas claro que la barra para que se distingan */
+.pestana {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 18px;
+  border: none;
+  border-radius: 8px 8px 0 0;
+  background-color: rgba(255, 255, 255, 0.1);
+  color: #e6ebf1;
+  font-size: 14px;
+  font-family: inherit;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.pestana:hover {
+  background-color: rgba(255, 255, 255, 0.2);
+  color: white;
+}
+
+/* La pestaña activa tiene el mismo color que el contenido,
+   asi parece que esta "pegada" a la pagina de abajo */
+.pestana.activa {
+  background-color: var(--gris-fondo);
+  color: var(--azul);
+  font-weight: 600;
+}
+
+/* ---------- Zona central ---------- */
+
 .contenido {
-  max-width: 1100px;
-  margin: 24px auto;
-  padding: 0 16px;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 24px 16px;
 }
 
 .contenido h2 {
@@ -58,56 +93,70 @@ body {
   font-size: 14px;
 }
 
-/* Filtros */
-.filtros {
-  display: flex;
-  flex-wrap: wrap;
+/* Dos columnas: filtros a la izquierda, resultados a la derecha */
+.modulo-columnas {
+  display: grid;
+  grid-template-columns: 260px 1fr;
   gap: 16px;
-  align-items: flex-end;
-  background-color: white;
-  border: 1px solid var(--gris-borde);
-  border-radius: 8px;
-  padding: 16px;
-  margin-bottom: 16px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+  align-items: start;
 }
 
-.filtros label {
+/* Tarjeta blanca */
+.panel {
+  background-color: white;
+  border: 1px solid var(--gris-borde);
+  border-radius: 10px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  padding: 16px;
+}
+
+/* ---------- Panel de filtros ---------- */
+
+.panel-filtros {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.panel-filtros h3 {
+  margin: 0;
+  font-size: 15px;
+  color: var(--azul);
+}
+
+.panel-filtros label {
   display: flex;
   flex-direction: column;
   gap: 4px;
   font-size: 13px;
   color: #555;
-  flex: 1;
-  min-width: 200px;
 }
 
-.filtros input,
-.filtros select {
+.panel-filtros input,
+.panel-filtros select {
   padding: 8px;
   font-size: 14px;
+  font-family: inherit;
   border: 1px solid var(--gris-borde);
-  border-radius: 4px;
+  border-radius: 6px;
 }
 
-.filtros input:focus,
-.filtros select:focus {
+.panel-filtros input:focus,
+.panel-filtros select:focus {
   outline: 2px solid var(--azul);
+  border-color: transparent;
 }
 
-.botones {
-  display: flex;
-  gap: 8px;
-}
+/* ---------- Botones ---------- */
 
-/* Botones */
 .boton {
   background-color: var(--azul);
   color: white;
   border: 1px solid var(--azul);
-  border-radius: 4px;
-  padding: 8px 16px;
+  border-radius: 6px;
+  padding: 9px 16px;
   font-size: 14px;
+  font-family: inherit;
   cursor: pointer;
 }
 
@@ -120,11 +169,11 @@ body {
   color: var(--azul);
 }
 
-/* Mensajes de estado */
+/* ---------- Mensajes de estado ---------- */
+
 .mensaje {
   padding: 12px 16px;
-  border-radius: 4px;
-  margin-bottom: 16px;
+  border-radius: 6px;
   background-color: white;
   border: 1px solid var(--gris-borde);
 }
@@ -141,19 +190,15 @@ body {
   color: var(--azul);
 }
 
-/* Tabla de resultados */
-.total {
-  font-size: 13px;
-  color: #555;
-  margin: 0 0 8px 0;
+/* ---------- Tabla de resultados ---------- */
+
+.panel-resultados {
+  padding: 0;
+  overflow: hidden;
 }
 
-.tabla-contenedor {
-  max-height: 520px;
-  overflow-y: auto;
-  background-color: white;
-  border: 1px solid var(--gris-borde);
-  border-radius: 8px;
+.panel-resultados .mensaje {
+  margin: 16px;
 }
 
 .tabla {
@@ -163,16 +208,16 @@ body {
 }
 
 .tabla th {
-  position: sticky;
-  top: 0;
-  background-color: var(--azul);
-  color: white;
+  background-color: #f8fafc;
+  color: #555;
   text-align: left;
-  padding: 10px 12px;
+  font-weight: 600;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--gris-borde);
 }
 
 .tabla td {
-  padding: 8px 12px;
+  padding: 10px 16px;
   border-bottom: 1px solid #eef1f5;
 }
 
@@ -180,16 +225,96 @@ body {
   cursor: pointer;
 }
 
-/* filas intercaladas para que la tabla sea mas facil de leer */
-.tabla tbody tr:nth-child(even) {
-  background-color: #f8fafc;
-}
-
 .tabla tbody tr:hover {
   background-color: var(--azul-claro);
 }
 
-/* Ventana de detalle */
+/* ---------- Badges de categoria ---------- */
+
+.badge {
+  display: inline-block;
+  padding: 3px 10px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.badge-naranja {
+  background-color: #fdeedd;
+  color: #a85412;
+}
+
+.badge-verde {
+  background-color: #e3f4e8;
+  color: #23733c;
+}
+
+.badge-azul {
+  background-color: #e3eefa;
+  color: #1f4e79;
+}
+
+.badge-morado {
+  background-color: #efe7f8;
+  color: #6a3d99;
+}
+
+.badge-gris {
+  background-color: #eceff3;
+  color: #4a5563;
+}
+
+/* ---------- Paginacion ---------- */
+
+.paginacion {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+  padding: 12px 16px;
+}
+
+.paginacion-texto {
+  font-size: 13px;
+  color: #666;
+}
+
+.paginacion-botones {
+  display: flex;
+  gap: 4px;
+  flex-wrap: wrap;
+}
+
+.paginacion-botones button {
+  min-width: 34px;
+  padding: 6px 10px;
+  border: 1px solid var(--gris-borde);
+  border-radius: 6px;
+  background-color: white;
+  color: var(--texto);
+  font-size: 13px;
+  font-family: inherit;
+  cursor: pointer;
+}
+
+.paginacion-botones button:hover:not(:disabled) {
+  background-color: var(--azul-claro);
+}
+
+.paginacion-botones button.actual {
+  background-color: var(--azul);
+  border-color: var(--azul);
+  color: white;
+}
+
+.paginacion-botones button:disabled {
+  color: #aaa;
+  cursor: default;
+}
+
+/* ---------- Ventana de detalle ---------- */
+
 .fondo-ventana {
   position: fixed;
   top: 0;
@@ -295,8 +420,21 @@ body {
   margin-top: 6px;
 }
 
-/* En pantallas pequeñas la etiqueta va arriba del valor */
+/* ---------- Pantallas pequeñas ---------- */
+
+@media (max-width: 800px) {
+  /* los filtros pasan arriba de la tabla */
+  .modulo-columnas {
+    grid-template-columns: 1fr;
+  }
+
+  .paginacion {
+    flex-direction: column;
+  }
+}
+
 @media (max-width: 600px) {
+  /* en el detalle la etiqueta va arriba del valor */
   .dato {
     grid-template-columns: 1fr;
     gap: 2px;
