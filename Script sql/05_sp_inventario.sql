@@ -91,7 +91,17 @@ BEGIN
         si.SearchDetails AS PalabrasClave,
 
         h.QuantityOnHand AS CantidadDisponible,
-        h.BinLocation AS Ubicacion
+        h.BinLocation AS Ubicacion,
+
+        -- datos para llenar el formulario de edicion
+        si.ColorID,
+        si.UnitPackageID AS UnidadEmpaqueID,
+        si.OuterPackageID AS EmpaqueExteriorID,
+        STRING_AGG(CAST(sg.StockGroupID AS VARCHAR(10)), ',') AS GruposIDs,
+        si.LeadTimeDays AS DiasEntrega,
+        si.IsChillerStock AS EsRefrigerado,
+        si.Barcode AS CodigoBarras,
+        si.MarketingComments AS ComentariosMarketing
 
     FROM syn.StockItems si
     JOIN syn.Suppliers s
@@ -126,14 +136,22 @@ BEGIN
         si.TypicalWeightPerUnit,
         si.SearchDetails,
         h.QuantityOnHand,
-        h.BinLocation;
+        h.BinLocation,
+        si.ColorID,
+        si.UnitPackageID,
+        si.OuterPackageID,
+        si.LeadTimeDays,
+        si.IsChillerStock,
+        si.Barcode,
+        si.MarketingComments;
 END;
 GO
 
+-- @Grupos es la lista de grupos del producto separada por comas, por ejemplo '2,4,6'
 CREATE OR ALTER PROCEDURE dbo.usp_Inventario_Insertar
     @Nombre NVARCHAR(100),
     @ProveedorID INT,
-    @GrupoID INT,
+    @Grupos NVARCHAR(200),
     @ColorID INT = NULL,
     @UnidadEmpaqueID INT,
     @EmpaqueExteriorID INT,
@@ -146,8 +164,8 @@ CREATE OR ALTER PROCEDURE dbo.usp_Inventario_Insertar
     @Peso DECIMAL(18,3),
     @CantidadDisponible INT,
     @Ubicacion NVARCHAR(20),
-    @DiasEntrega INT = 1,
-    @EsRefrigerado BIT = 0,
+    @DiasEntrega INT,
+    @EsRefrigerado BIT,
     @CodigoBarras NVARCHAR(50) = NULL,
     @ComentariosMarketing NVARCHAR(MAX) = NULL
 AS
@@ -157,9 +175,31 @@ BEGIN
     DECLARE @NuevoProducto TABLE (
         ProductoID INT
     );
+    DECLARE @ProductoID INT;
+
+    -- los grupos separados en filas
+    DECLARE @ListaGrupos TABLE (
+        GrupoID INT
+    );
 
     BEGIN TRY
         BEGIN TRANSACTION;
+
+        INSERT INTO @ListaGrupos (GrupoID)
+        SELECT DISTINCT TRY_CAST(value AS INT)
+        FROM STRING_SPLIT(@Grupos, ',');
+
+        -- debe venir al menos un grupo y todos deben existir
+        IF NOT EXISTS (SELECT 1 FROM @ListaGrupos)
+           OR EXISTS (
+               SELECT 1
+               FROM @ListaGrupos l
+               LEFT JOIN syn.StockGroups sg ON sg.StockGroupID = l.GrupoID
+               WHERE sg.StockGroupID IS NULL
+           )
+        BEGIN
+            THROW 50004, 'Debe elegir al menos un grupo válido.', 1;
+        END;
 
         INSERT INTO syn.StockItems (
             StockItemName,
@@ -201,8 +241,6 @@ BEGIN
             1
         );
 
-        DECLARE @ProductoID INT;
-
         SELECT @ProductoID = ProductoID
         FROM @NuevoProducto;
 
@@ -232,11 +270,8 @@ BEGIN
             StockGroupID,
             LastEditedBy
         )
-        VALUES (
-            @ProductoID,
-            @GrupoID,
-            1
-        );
+        SELECT @ProductoID, GrupoID, 1
+        FROM @ListaGrupos;
 
         COMMIT TRANSACTION;
 
@@ -248,16 +283,24 @@ BEGIN
         IF @@TRANCOUNT > 0
             ROLLBACK TRANSACTION;
 
+        -- 2627 / 2601: el nombre del producto ya existe (restriccion UNIQUE)
+        IF ERROR_NUMBER() IN (2627, 2601)
+        BEGIN
+            THROW 50003, 'Ya existe un producto con ese nombre.', 1;
+        END;
+
         THROW;
     END CATCH;
 END;
 GO
 
+-- @Grupos es la lista completa de grupos del producto separada por comas, por ejemplo '2,4,6'.
+-- Se reemplazan todos los grupos anteriores por los de la lista.
 CREATE OR ALTER PROCEDURE dbo.usp_Inventario_Actualizar
     @ProductoID INT,
     @Nombre NVARCHAR(100),
     @ProveedorID INT,
-    @GrupoID INT,
+    @Grupos NVARCHAR(200),
     @ColorID INT = NULL,
     @UnidadEmpaqueID INT,
     @EmpaqueExteriorID INT,
@@ -270,13 +313,17 @@ CREATE OR ALTER PROCEDURE dbo.usp_Inventario_Actualizar
     @Peso DECIMAL(18,3),
     @CantidadDisponible INT,
     @Ubicacion NVARCHAR(20),
-    @DiasEntrega INT = 1,
-    @EsRefrigerado BIT = 0,
+    @DiasEntrega INT,
+    @EsRefrigerado BIT,
     @CodigoBarras NVARCHAR(50) = NULL,
     @ComentariosMarketing NVARCHAR(MAX) = NULL
 AS
 BEGIN
     SET NOCOUNT ON;
+
+    DECLARE @ListaGrupos TABLE (
+        GrupoID INT
+    );
 
     BEGIN TRY
         BEGIN TRANSACTION;
@@ -288,6 +335,22 @@ BEGIN
         )
         BEGIN
             THROW 50001, 'El producto indicado no existe.', 1;
+        END;
+
+        INSERT INTO @ListaGrupos (GrupoID)
+        SELECT DISTINCT TRY_CAST(value AS INT)
+        FROM STRING_SPLIT(@Grupos, ',');
+
+        -- debe venir al menos un grupo y todos deben existir
+        IF NOT EXISTS (SELECT 1 FROM @ListaGrupos)
+           OR EXISTS (
+               SELECT 1
+               FROM @ListaGrupos l
+               LEFT JOIN syn.StockGroups sg ON sg.StockGroupID = l.GrupoID
+               WHERE sg.StockGroupID IS NULL
+           )
+        BEGIN
+            THROW 50004, 'Debe elegir al menos un grupo válido.', 1;
         END;
 
         UPDATE syn.StockItems
@@ -318,6 +381,7 @@ BEGIN
             LastEditedBy = 1
         WHERE StockItemID = @ProductoID;
 
+        -- se reemplazan los grupos por la lista completa que llego
         DELETE FROM syn.StockItemStockGroups
         WHERE StockItemID = @ProductoID;
 
@@ -326,11 +390,8 @@ BEGIN
             StockGroupID,
             LastEditedBy
         )
-        VALUES (
-            @ProductoID,
-            @GrupoID,
-            1
-        );
+        SELECT @ProductoID, GrupoID, 1
+        FROM @ListaGrupos;
 
         COMMIT TRANSACTION;
     END TRY
@@ -338,6 +399,12 @@ BEGIN
     BEGIN CATCH
         IF @@TRANCOUNT > 0
             ROLLBACK TRANSACTION;
+
+        -- 2627 / 2601: el nombre del producto ya existe (restriccion UNIQUE)
+        IF ERROR_NUMBER() IN (2627, 2601)
+        BEGIN
+            THROW 50003, 'Ya existe un producto con ese nombre.', 1;
+        END;
 
         THROW;
     END CATCH;

@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { consultar, enviar } from '../api';
+import Buscador from '../components/Buscador';
 import DetalleCliente from '../components/DetalleCliente';
 import FormularioCliente from '../components/FormularioCliente';
 import Paginacion from '../components/Paginacion';
@@ -30,6 +31,9 @@ function Clientes() {
 
   // cliente seleccionado en la tabla (null = ventana de detalle cerrada)
   const [clienteId, setClienteId] = useState(null);
+
+  // cambia cada vez que se restauran los filtros, para vaciar el buscador de nombre
+  const [reinicios, setReinicios] = useState(0);
 
   const [formularioAbierto, setFormularioAbierto] = useState(false);
   const [clienteEditarId, setClienteEditarId] = useState(null); // null = cliente nuevo
@@ -95,6 +99,7 @@ function Clientes() {
 
   function restaurar() {
     setNombre('');
+    setReinicios(reinicios + 1);
     setCategoriaId('');
     setMetodoEntregaId('');
     setExito('');
@@ -157,16 +162,18 @@ function Clientes() {
         <form className="panel panel-filtros" onSubmit={alBuscar}>
           <h3>Filtros</h3>
 
-          <label>
-            Nombre del cliente
-            <input
-              type="text"
-              value={nombre}
-              maxLength={100}
-              placeholder="Escriba parte del nombre"
-              onChange={(e) => setNombre(e.target.value)}
-            />
-          </label>
+          {/* Texto libre con sugerencias: no hace falta elegir una, se busca con lo escrito.
+              El key cambia al restaurar los filtros y eso vacia el campo */}
+          <Buscador
+            key={reinicios}
+            etiqueta="Nombre del cliente"
+            ruta="/catalogos/clientes"
+            campoId="ClienteID"
+            campoTexto="Cliente"
+            textoInicial=""
+            placeholder="Escriba parte del nombre"
+            alElegir={(id, texto) => setNombre(texto)}
+          />
 
           <label>
             Categoría
