@@ -28,6 +28,10 @@ function Paginacion({ pagina, total, tamano, cantidadFilas, elementos, alCambiar
       </span>
 
       <div className="paginacion-botones">
+        <button disabled={pagina === 1} onClick={() => alCambiar(1)} title="Primera página">
+          &laquo;
+        </button>
+
         <button disabled={pagina === 1} onClick={() => alCambiar(pagina - 1)}>
           &lt; Anterior
         </button>
@@ -44,6 +48,10 @@ function Paginacion({ pagina, total, tamano, cantidadFilas, elementos, alCambiar
 
         <button disabled={pagina === totalPaginas} onClick={() => alCambiar(pagina + 1)}>
           Siguiente &gt;
+        </button>
+
+        <button disabled={pagina === totalPaginas} onClick={() => alCambiar(totalPaginas)} title="Última página">
+          &raquo;
         </button>
       </div>
     </div>

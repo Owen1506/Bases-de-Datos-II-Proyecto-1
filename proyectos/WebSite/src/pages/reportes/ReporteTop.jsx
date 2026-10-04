@@ -164,7 +164,7 @@ function ReporteTop({ tipo, alVolver }) {
                       <td>{esProductos ? fila.Producto : esProveedores ? fila.Proveedor : fila.Cliente}</td>
                       {!esProductos && <td className="monto">{esProveedores ? fila.CantidadOrdenes : fila.CantidadFacturas}</td>}
                       <td className="monto">
-                        {formatoMonto.format(esProductos ? fila.GananciaTotal : esProveedores ? fila.MontoTotal : fila.MontoTotalFacturado)}
+                        {formatoMonto(esProductos ? fila.GananciaTotal : esProveedores ? fila.MontoTotal : fila.MontoTotalFacturado)}
                       </td>
                     </tr>
                   ))}

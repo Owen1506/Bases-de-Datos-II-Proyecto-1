@@ -9,12 +9,14 @@ import { ICONO_BASURERO, ICONO_LAPIZ } from '../components/Iconos';
 // Cantidad de productos por pagina. Debe ser igual al @TamanoPagina del SP.
 const TAMANO_PAGINA = 10;
 
-const FILTROS_VACIOS = { nombre: '', grupoId: '' };
+const FILTROS_VACIOS = { nombre: '', grupoId: '', cantidadMin: '', cantidadMax: '' };
 
 function Inventario() {
   // lo que el usuario va escribiendo en los filtros
   const [nombre, setNombre] = useState('');
   const [grupoId, setGrupoId] = useState('');
+  const [cantidadMin, setCantidadMin] = useState('');
+  const [cantidadMax, setCantidadMax] = useState('');
 
   // filtros de la ultima busqueda, se usan al cambiar de pagina
   const [filtrosAplicados, setFiltrosAplicados] = useState(FILTROS_VACIOS);
@@ -55,6 +57,8 @@ function Inventario() {
     if (filtros.grupoId !== '') {
       ruta += '&grupoId=' + filtros.grupoId;
     }
+    if (filtros.cantidadMin !== '') ruta += '&cantidadMin=' + filtros.cantidadMin;
+    if (filtros.cantidadMax !== '') ruta += '&cantidadMax=' + filtros.cantidadMax;
 
     setCargando(true);
     setError('');
@@ -83,17 +87,40 @@ function Inventario() {
     buscar(FILTROS_VACIOS, 1);
   }, []);
 
+  // Revisa el rango de cantidad antes de buscar. Devuelve el mensaje de error o '' si esta bien.
+  function validarFiltros() {
+    if (cantidadMin !== '' && (Number(cantidadMin) < 0 || !Number.isInteger(Number(cantidadMin)))) {
+      return 'La cantidad mínima debe ser un número entero de 0 o más.';
+    }
+    if (cantidadMax !== '' && (Number(cantidadMax) < 0 || !Number.isInteger(Number(cantidadMax)))) {
+      return 'La cantidad máxima debe ser un número entero de 0 o más.';
+    }
+    if (cantidadMin !== '' && cantidadMax !== '' && Number(cantidadMin) > Number(cantidadMax)) {
+      return 'La cantidad mínima no puede ser mayor que la cantidad máxima.';
+    }
+    return '';
+  }
+
   // Una busqueda nueva siempre empieza en la pagina 1
   function alBuscar(evento) {
     evento.preventDefault(); // evita que el formulario recargue la pagina
     setExito('');
-    buscar({ nombre: nombre, grupoId: grupoId }, 1);
+
+    const mensajeError = validarFiltros();
+    if (mensajeError !== '') {
+      setError(mensajeError);
+      return;
+    }
+
+    buscar({ nombre, grupoId, cantidadMin, cantidadMax }, 1);
   }
 
   function restaurar() {
     setNombre('');
     setReinicios(reinicios + 1);
     setGrupoId('');
+    setCantidadMin('');
+    setCantidadMax('');
     setExito('');
     buscar(FILTROS_VACIOS, 1);
   }
@@ -178,6 +205,18 @@ function Inventario() {
               ))}
             </select>
           </label>
+
+          {/* Rango de cantidad disponible */}
+          <div className="rango">
+            <label>
+              Cantidad mínima
+              <input type="number" min="0" step="1" value={cantidadMin} onChange={(e) => setCantidadMin(e.target.value)} />
+            </label>
+            <label>
+              Cantidad máxima
+              <input type="number" min="0" step="1" value={cantidadMax} onChange={(e) => setCantidadMax(e.target.value)} />
+            </label>
+          </div>
 
           <button type="submit" className="boton">Buscar</button>
           <button type="button" className="boton secundario" onClick={restaurar}>

@@ -29,6 +29,24 @@
   border-radius: 6px;
 }
 
+/* Campos de un rango (desde / hasta): van lado a lado si caben (cada uno necesita
+   al menos 140px); si no, se acomodan uno debajo del otro */
+.rango {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: clamp(8px, 0.8vw, 12px);
+}
+
+/* sin esto el campo de fecha no se encoge y se sale del panel */
+.rango label,
+.rango input {
+  min-width: 0;
+}
+
+.rango input {
+  width: 100%;
+}
+
 .panel-filtros input:focus,
 .panel-filtros select:focus {
   outline: 2px solid var(--azul);

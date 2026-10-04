@@ -114,9 +114,9 @@ function ReporteVentasClientes({ alVolver }) {
                     <tr key={indice} className={fila.TipoFila === 'general' ? 'total-general' : fila.TipoFila === 'categoria' ? 'subtotal' : ''}>
                       <td>{fila.Categoria}</td>
                       <td>{fila.Cliente || '—'}</td>
-                      <td className="monto">{formatoMonto.format(fila.MontoMinimo)}</td>
-                      <td className="monto">{formatoMonto.format(fila.MontoMaximo)}</td>
-                      <td className="monto">{formatoMonto.format(fila.MontoPromedio)}</td>
+                      <td className="monto">{formatoMonto(fila.MontoMinimo)}</td>
+                      <td className="monto">{formatoMonto(fila.MontoMaximo)}</td>
+                      <td className="monto">{formatoMonto(fila.MontoPromedio)}</td>
                     </tr>
                   ))}
                 </tbody>

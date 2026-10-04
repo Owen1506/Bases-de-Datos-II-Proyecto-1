@@ -4,12 +4,27 @@ const { esEntero, vacio } = require('../validar');
 
 const router = express.Router();
 
-// GET /api/inventario?nombre=&grupoId=&pagina=
+// GET /api/inventario?nombre=&grupoId=&cantidadMin=&cantidadMax=&pagina=
 router.get('/', async (req, res) => {
   // si un filtro no viene se manda null y el SP no lo toma en cuenta
   let nombre = req.query.nombre || null;
   let grupoId = req.query.grupoId || null;
+  let cantidadMin = req.query.cantidadMin || null;
+  let cantidadMax = req.query.cantidadMax || null;
   let pagina = req.query.pagina || 1;
+
+  if (cantidadMin !== null) {
+    if (!esEntero(cantidadMin) || Number(cantidadMin) < 0) {
+      return res.status(400).json({ mensaje: 'La cantidad mínima debe ser un número entero mayor o igual a cero.' });
+    }
+    cantidadMin = Number(cantidadMin);
+  }
+  if (cantidadMax !== null) {
+    if (!esEntero(cantidadMax) || Number(cantidadMax) < 0) {
+      return res.status(400).json({ mensaje: 'La cantidad máxima debe ser un número entero mayor o igual a cero.' });
+    }
+    cantidadMax = Number(cantidadMax);
+  }
 
   if (!esEntero(pagina) || Number(pagina) < 1) {
     return res.status(400).json({ mensaje: 'La página debe ser un número entero mayor que cero.' });
@@ -25,6 +40,8 @@ router.get('/', async (req, res) => {
   const filas = await ejecutarSP('dbo.usp_Inventario_Listar', {
     Nombre: nombre,
     GrupoID: grupoId,
+    CantidadMin: cantidadMin,
+    CantidadMax: cantidadMax,
     Pagina: Number(pagina)
   });
 
