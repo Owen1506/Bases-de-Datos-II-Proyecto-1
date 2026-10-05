@@ -20,7 +20,7 @@ II Semestre, 2026
 - Owen Smith Cerdas - 2024083328
 
 ### Enlace del video
-(pendiente)
+https://youtu.be/6pdkmnrEXSs
 
 ---
 
