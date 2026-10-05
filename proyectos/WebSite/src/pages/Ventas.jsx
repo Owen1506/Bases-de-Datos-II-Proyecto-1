@@ -1,9 +1,11 @@
 import { useEffect, useState } from 'react';
-import { consultar } from '../api';
+import { consultar, enviar } from '../api';
 import { formatoFecha, formatoMonto } from '../formato';
 import Buscador from '../components/Buscador';
 import DetalleVenta from '../components/DetalleVenta';
+import FormularioVenta from '../components/FormularioVenta';
 import Paginacion from '../components/Paginacion';
+import { ICONO_BASURERO, ICONO_LAPIZ } from '../components/Iconos';
 
 // Cantidad de facturas por pagina. Debe ser igual al @TamanoPagina del SP.
 const TAMANO_PAGINA = 10;
@@ -32,6 +34,10 @@ function Ventas() {
 
   // cambia cada vez que se restauran los filtros, para vaciar el buscador de cliente
   const [reinicios, setReinicios] = useState(0);
+
+  const [formularioAbierto, setFormularioAbierto] = useState(false);
+  const [facturaEditarId, setFacturaEditarId] = useState(null); // null = factura nueva
+  const [exito, setExito] = useState('');
 
   // Le pide a la API una pagina de facturas con los filtros indicados.
   // El filtrado, el orden y la paginacion los hace el stored procedure.
@@ -94,10 +100,12 @@ function Ventas() {
       return;
     }
 
+    setExito('');
     buscar({ cliente, fechaInicio, fechaFin, montoMin, montoMax }, 1);
   }
 
   function restaurar() {
+    setExito('');
     setCliente('');
     setFechaInicio('');
     setFechaFin('');
@@ -112,10 +120,51 @@ function Ventas() {
     buscar(filtrosAplicados, numero);
   }
 
+  function abrirNuevo() {
+    setFacturaEditarId(null);
+    setFormularioAbierto(true);
+  }
+
+  function abrirEditar(evento, id) {
+    evento.stopPropagation(); // evita que el clic tambien abra el detalle
+    setFacturaEditarId(id);
+    setFormularioAbierto(true);
+  }
+
+  // Cuando el formulario guarda bien: se cierra, se muestra el mensaje y se recarga la tabla
+  function alGuardar(mensaje) {
+    setFormularioAbierto(false);
+    setExito(mensaje);
+    buscar(filtrosAplicados, pagina);
+  }
+
+  async function eliminar(evento, venta) {
+    evento.stopPropagation(); // evita que el clic tambien abra el detalle
+
+    if (!window.confirm('¿Seguro que desea eliminar la factura #' + venta.FacturaID + '?')) {
+      return;
+    }
+
+    setExito('');
+    try {
+      const respuesta = await enviar('/ventas/' + venta.FacturaID, 'DELETE', {});
+      setExito(respuesta.mensaje);
+      buscar(filtrosAplicados, pagina);
+    } catch (e) {
+      // por ejemplo: "No se puede eliminar la factura porque tiene registros asociados."
+      setError(e.message);
+    }
+  }
+
   return (
     <>
-      <h2>Ventas</h2>
-      <p className="descripcion">Busque facturas y haga clic en una para ver su detalle.</p>
+      <div className="titulo-modulo">
+        <div>
+          <h2>Ventas</h2>
+          <p className="descripcion">Busque facturas y haga clic en una para ver su detalle.</p>
+        </div>
+        <button className="boton" onClick={abrirNuevo}>+ Nueva factura</button>
+      </div>
 
       <div className="modulo-columnas">
         {/* Panel izquierdo: filtros */}
@@ -167,6 +216,8 @@ function Ventas() {
 
         {/* Area principal: tabla y paginacion */}
         <div className="panel panel-resultados">
+          {exito !== '' && <div className="mensaje exito">{exito}</div>}
+
           {error !== '' && <div className="mensaje error">{error}</div>}
 
           {cargando && <div className="mensaje">Cargando...</div>}
@@ -185,6 +236,7 @@ function Ventas() {
                     <th>Cliente</th>
                     <th>Método de entrega</th>
                     <th className="numero">Monto</th>
+                    <th></th>
                   </tr>
                 </thead>
                 <tbody>
@@ -195,6 +247,15 @@ function Ventas() {
                       <td>{v.Cliente}</td>
                       <td>{v.MetodoEntrega}</td>
                       <td className="numero">{formatoMonto(v.Monto)}</td>
+                      {/* estos botones solo se ven al pasar el mouse por la fila (ver styles/tabla.css) */}
+                      <td className="acciones">
+                        <button className="boton-icono" title="Editar" onClick={(e) => abrirEditar(e, v.FacturaID)}>
+                          {ICONO_LAPIZ}
+                        </button>
+                        <button className="boton-icono peligro" title="Eliminar" onClick={(e) => eliminar(e, v)}>
+                          {ICONO_BASURERO}
+                        </button>
+                      </td>
                     </tr>
                   ))}
                 </tbody>
@@ -215,6 +276,14 @@ function Ventas() {
 
       {facturaId !== null && (
         <DetalleVenta facturaId={facturaId} alCerrar={() => setFacturaId(null)} />
+      )}
+
+      {formularioAbierto && (
+        <FormularioVenta
+          facturaId={facturaEditarId}
+          alCerrar={() => setFormularioAbierto(false)}
+          alGuardar={alGuardar}
+        />
       )}
     </>
   );

@@ -1,5 +1,6 @@
 const express = require('express');
 const { ejecutarSP } = require('../db');
+const { esEntero } = require('../validar');
 
 const router = express.Router();
 
@@ -36,6 +37,26 @@ router.get('/tipos-empaque', async (req, res) => {
 // Lista completa de proveedores para el select del formulario de productos (son 13)
 router.get('/lista-proveedores', async (req, res) => {
   res.json(await ejecutarSP('dbo.usp_Catalogo_Proveedores'));
+});
+
+// Catalogos del formulario de ventas
+
+router.get('/vendedores', async (req, res) => {
+  res.json(await ejecutarSP('dbo.usp_Catalogo_Vendedores'));
+});
+
+// Lista completa de productos con su precio, para las lineas de la factura
+router.get('/lista-productos', async (req, res) => {
+  res.json(await ejecutarSP('dbo.usp_Catalogo_Productos'));
+});
+
+// Contactos (primario y alternativo) de un cliente: /api/catalogos/contactos-cliente?clienteId=5
+router.get('/contactos-cliente', async (req, res) => {
+  const clienteId = req.query.clienteId;
+  if (!esEntero(clienteId)) {
+    return res.status(400).json({ mensaje: 'El cliente debe ser un número entero.' });
+  }
+  res.json(await ejecutarSP('dbo.usp_Catalogo_ContactosCliente', { ClienteID: Number(clienteId) }));
 });
 
 // Buscadores: reciben ?texto= y devuelven las primeras 20 coincidencias.
