@@ -100,6 +100,7 @@ BEGIN
         c.CustomerName AS Cliente,
 
         dm.DeliveryMethodName AS MetodoEntrega,
+        i.DeliveryMethodID AS MetodoEntregaID, -- para llenar el formulario de edicion
 
         i.CustomerPurchaseOrderNumber AS NumeroOrdenCliente,
 
@@ -209,14 +210,15 @@ BEGIN
             THROW 50002, 'El método de entrega indicado no existe.', 1;
         END;
 
-        -- Validar contacto
+        -- Validar contacto: debe ser el contacto primario o alternativo del cliente
         IF NOT EXISTS (
             SELECT 1
-            FROM syn.People
-            WHERE PersonID = @ContactoID
+            FROM syn.Customers
+            WHERE CustomerID = @ClienteID
+              AND @ContactoID IN (PrimaryContactPersonID, AlternateContactPersonID)
         )
         BEGIN
-            THROW 50003, 'La persona de contacto indicada no existe.', 1;
+            THROW 50003, 'La persona de contacto debe ser el contacto primario o alternativo del cliente.', 1;
         END;
 
         -- Validar vendedor
@@ -515,14 +517,15 @@ BEGIN
             THROW 50003, 'El método de entrega indicado no existe.', 1;
         END;
 
-        -- Validar contacto
+        -- Validar contacto: debe ser el contacto primario o alternativo del cliente
         IF NOT EXISTS (
             SELECT 1
-            FROM syn.People
-            WHERE PersonID = @ContactoID
+            FROM syn.Customers
+            WHERE CustomerID = @ClienteID
+              AND @ContactoID IN (PrimaryContactPersonID, AlternateContactPersonID)
         )
         BEGIN
-            THROW 50004, 'La persona de contacto indicada no existe.', 1;
+            THROW 50004, 'La persona de contacto debe ser el contacto primario o alternativo del cliente.', 1;
         END;
 
         -- Validar vendedor

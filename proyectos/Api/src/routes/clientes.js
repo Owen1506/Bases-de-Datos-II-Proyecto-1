@@ -65,8 +65,7 @@ const TEXTOS_OBLIGATORIOS = [
   'DireccionEntrega1', 'CodigoPostalEntrega', 'DireccionPostal1', 'CodigoPostalPostal'
 ];
 const IDS_OBLIGATORIOS = [
-  'CategoriaID', 'ContactoPrimarioID',
-  'MetodoEntregaID', 'CiudadEntregaID', 'CiudadPostalID'
+  'CategoriaID', 'MetodoEntregaID', 'CiudadEntregaID', 'CiudadPostalID'
 ];
 
 // Revisa los datos del formulario. Devuelve el mensaje de error o '' si todo esta bien.
@@ -94,6 +93,11 @@ function validarCliente(c) {
   // opcional: si viene vacio el cliente se factura a si mismo (lo resuelve el SP)
   if (!vacio(c.ClienteFacturarID) && !esEntero(c.ClienteFacturarID)) {
     return 'El cliente por facturar no es válido.';
+  }
+
+  // opcional: si viene vacio, el SP crea al cliente como su propio contacto (o conserva el actual al editar)
+  if (!vacio(c.ContactoPrimarioID) && !esEntero(c.ContactoPrimarioID)) {
+    return 'El contacto primario no es válido.';
   }
 
   if (!vacio(c.ContactoAlternativoID) && !esEntero(c.ContactoAlternativoID)) {
@@ -126,7 +130,7 @@ function parametrosCliente(c) {
     ClienteFacturarID: vacio(c.ClienteFacturarID) ? null : Number(c.ClienteFacturarID),
     CategoriaID: Number(c.CategoriaID),
     GrupoCompraID: vacio(c.GrupoCompraID) ? null : Number(c.GrupoCompraID),
-    ContactoPrimarioID: Number(c.ContactoPrimarioID),
+    ContactoPrimarioID: vacio(c.ContactoPrimarioID) ? null : Number(c.ContactoPrimarioID),
     ContactoAlternativoID: vacio(c.ContactoAlternativoID) ? null : Number(c.ContactoAlternativoID),
     MetodoEntregaID: Number(c.MetodoEntregaID),
     CiudadEntregaID: Number(c.CiudadEntregaID),

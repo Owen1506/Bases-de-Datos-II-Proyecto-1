@@ -122,7 +122,9 @@ function FormularioCliente({ clienteId, alCerrar, alGuardar }) {
     }
     if (datos.MetodoEntregaID === '') return 'Seleccione un método de entrega.';
     if (datos.DiasPago === '' || Number(datos.DiasPago) < 0) return 'Los días de gracia deben ser 0 o más.';
-    if (datos.ContactoPrimarioID === null) return 'Elija de la lista el contacto primario.';
+    if (quedoSinElegir(datos.ContactoPrimarioID, textos.ContactoPrimario)) {
+      return 'Elija de la lista el contacto primario, o deje el campo vacío.';
+    }
     if (quedoSinElegir(datos.ContactoAlternativoID, textos.ContactoAlternativo)) {
       return 'Elija de la lista el contacto alternativo, o deje el campo vacío.';
     }
@@ -239,12 +241,17 @@ function FormularioCliente({ clienteId, alCerrar, alGuardar }) {
               <h4>Contacto</h4>
               <div className="campos">
                 <Buscador
-                  etiqueta="Contacto primario" obligatorio
+                  etiqueta="Contacto primario"
                   ruta="/catalogos/personas"
                   campoId="PersonaID"
                   campoTexto="Persona"
                   textoInicial={textos.ContactoPrimario || ''}
-                  alElegir={(id) => cambiar('ContactoPrimarioID', id)}
+                  alElegir={(id, texto) => elegirOpcional('ContactoPrimarioID', 'ContactoPrimario', id, texto)}
+                  ayuda={
+                    esNuevo
+                      ? 'Déjelo vacío para que el propio cliente sea su contacto.'
+                      : 'Si lo deja vacío se conserva el contacto actual.'
+                  }
                 />
 
                 <Buscador

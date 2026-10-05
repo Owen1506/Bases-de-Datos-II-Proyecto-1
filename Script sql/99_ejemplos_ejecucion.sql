@@ -45,18 +45,6 @@ EXEC dbo.usp_Clientes_Actualizar
 
 EXEC dbo.usp_Clientes_Detalle @ClienteID = @id;
 EXEC dbo.usp_Clientes_Eliminar @ClienteID = @id;
-
--- Este falla a proposito: el cliente 1 tiene ventas asociadas
-EXEC dbo.usp_Clientes_Eliminar @ClienteID = 1;
-GO
-
--- Este falla a proposito: un cliente sin grupo de compra no puede facturarle a Tailspin
-EXEC dbo.usp_Clientes_Insertar
-    @Nombre = 'Cliente Ejemplo 2', @ClienteFacturarID = 1, @CategoriaID = 3,
-    @ContactoPrimarioID = 1001, @MetodoEntregaID = 3, @CiudadEntregaID = 19586, @CiudadPostalID = 19586,
-    @DiasPago = 7, @Telefono = '(308) 555-0199', @Fax = '(308) 555-0198', @SitioWeb = 'http://www.ejemplo.com',
-    @DireccionEntrega1 = 'Shop 1', @CodigoPostalEntrega = '90410', @DireccionPostal1 = 'PO Box 1',
-    @CodigoPostalPostal = '90410';
 GO
 
 -- Proveedores
@@ -89,13 +77,14 @@ EXEC dbo.usp_Proveedores_Actualizar
 
 EXEC dbo.usp_Proveedores_Detalle @ProveedorID = @idProveedor;
 EXEC dbo.usp_Proveedores_Eliminar @ProveedorID = @idProveedor;
-
--- Este falla a proposito: el proveedor 1 tiene productos y ordenes de compra
-EXEC dbo.usp_Proveedores_Eliminar @ProveedorID = 1;
 GO
 
 -- Inventario
 EXEC dbo.usp_Catalogo_GruposInventario;
+-- catalogos del formulario de productos
+EXEC dbo.usp_Catalogo_Proveedores;
+EXEC dbo.usp_Catalogo_Colores;
+EXEC dbo.usp_Catalogo_TiposEmpaque;
 EXEC dbo.usp_Inventario_Listar;
 EXEC dbo.usp_Inventario_Listar @Nombre = 'usb';
 EXEC dbo.usp_Inventario_Listar @GrupoID = 4;
@@ -122,9 +111,6 @@ EXEC dbo.usp_Inventario_Actualizar
 
 EXEC dbo.usp_Inventario_Detalle @ProductoID = @idProducto;
 EXEC dbo.usp_Inventario_Eliminar @ProductoID = @idProducto;
-
--- Este falla a proposito: el producto 1 tiene ventas y ordenes asociadas
-EXEC dbo.usp_Inventario_Eliminar @ProductoID = 1;
 GO
 
 -- Ventas
@@ -138,6 +124,52 @@ EXEC dbo.usp_Ventas_Detalle @FacturaID = 1;
 EXEC dbo.usp_Ventas_DetalleLineas @FacturaID = 1;
 GO
 
--- Este falla a proposito: la fecha inicial es mayor que la final
-EXEC dbo.usp_Ventas_Listar @FechaInicio = '2015-12-31', @FechaFin = '2015-01-01';
+-- CRUD de ventas: se crea una factura con dos productos, se edita y se elimina.
+-- Las lineas van en JSON; el impuesto y los totales los calcula el SP.
+EXEC dbo.usp_Catalogo_Vendedores;
+EXEC dbo.usp_Catalogo_ContactosCliente @ClienteID = 1;
+EXEC dbo.usp_Catalogo_Productos;
+
+DECLARE @nuevaFactura TABLE (FacturaID INT);
+DECLARE @idFactura INT;
+
+INSERT @nuevaFactura EXEC dbo.usp_Ventas_Insertar
+    @ClienteID = 1, @MetodoEntregaID = 3, @ContactoID = 1001, @VendedorID = 2, @Fecha = '2016-06-01',
+    @NumeroOrdenCliente = '99999', @InstruccionesEntrega = 'Dejar en recepcion',
+    @Detalles = '[{"ProductoID":1,"Cantidad":2,"PrecioUnitario":25},{"ProductoID":2,"Cantidad":1,"PrecioUnitario":25}]';
+SELECT @idFactura = FacturaID FROM @nuevaFactura;
+
+EXEC dbo.usp_Ventas_Actualizar
+    @FacturaID = @idFactura, @ClienteID = 1, @MetodoEntregaID = 3, @ContactoID = 1002, @VendedorID = 3,
+    @Fecha = '2016-06-02', @Detalles = '[{"ProductoID":3,"Cantidad":5,"PrecioUnitario":10}]';
+
+EXEC dbo.usp_Ventas_Detalle @FacturaID = @idFactura;
+EXEC dbo.usp_Ventas_DetalleLineas @FacturaID = @idFactura;
+EXEC dbo.usp_Ventas_Eliminar @FacturaID = @idFactura;
+GO
+
+-- Reportes y estadisticas
+-- años validos para los filtros de los reportes
+EXEC dbo.usp_Reporte_AniosFacturas;
+EXEC dbo.usp_Reporte_AniosOrdenesCompra;
+
+-- 1. Montos de compras a proveedores por proveedor y categoria (ROLLUP)
+EXEC dbo.usp_Reporte_ComprasProveedores;
+EXEC dbo.usp_Reporte_ComprasProveedores @Categoria = 'Novelty', @NombreProveedor = 'Contoso';
+
+-- 2. Montos de ventas a clientes por cliente y categoria (ROLLUP)
+EXEC dbo.usp_Reporte_VentasClientes;
+EXEC dbo.usp_Reporte_VentasClientes @NombreCliente = 'Tailspin', @Categoria = 'Novelty';
+
+-- 3. Top 5 de productos con mas ganancia por año (DENSE_RANK)
+EXEC dbo.usp_Reporte_TopProductosGanancia;
+EXEC dbo.usp_Reporte_TopProductosGanancia @Anio = 2015;
+
+-- 4. Top 5 de clientes con mas facturas por año (DENSE_RANK)
+EXEC dbo.usp_Reporte_TopClientesFacturas;
+EXEC dbo.usp_Reporte_TopClientesFacturas @AnioInicio = 2014, @AnioFin = 2015;
+
+-- 5. Top 5 de proveedores con mas ordenes de compra por año (DENSE_RANK)
+EXEC dbo.usp_Reporte_TopProveedoresOrdenes;
+EXEC dbo.usp_Reporte_TopProveedoresOrdenes @AnioInicio = 2014, @AnioFin = 2015;
 GO

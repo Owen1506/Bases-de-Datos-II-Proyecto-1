@@ -1,6 +1,6 @@
 const express = require('express');
 const { ejecutarSP } = require('../db');
-const { esEntero } = require('../validar');
+const { esEntero, vacio } = require('../validar');
 
 const router = express.Router();
 
@@ -76,6 +76,100 @@ router.get('/:id', async (req, res) => {
   const lineas = await ejecutarSP('dbo.usp_Ventas_DetalleLineas', { FacturaID: Number(req.params.id) });
 
   res.json({ encabezado: encabezado[0], lineas: lineas });
+});
+
+// ---------- Insertar, actualizar y eliminar ----------
+
+// Revisa los datos del formulario. Devuelve el mensaje de error o '' si todo esta bien.
+// Los impuestos y totales no se revisan aqui: los calcula el SP al guardar.
+function validarVenta(v) {
+  if (vacio(v.ClienteID) || !esEntero(v.ClienteID)) return 'Debe elegir un cliente.';
+  if (vacio(v.ContactoID) || !esEntero(v.ContactoID)) return 'Debe elegir la persona de contacto.';
+  if (vacio(v.MetodoEntregaID) || !esEntero(v.MetodoEntregaID)) return 'Debe elegir el método de entrega.';
+  if (vacio(v.VendedorID) || !esEntero(v.VendedorID)) return 'Debe elegir el vendedor.';
+  if (vacio(v.Fecha) || !fechaValida(String(v.Fecha))) return 'La fecha de la factura no es válida.';
+
+  // las lineas llegan como lista: [{ ProductoID, Cantidad, PrecioUnitario }, ...]
+  if (!Array.isArray(v.Lineas) || v.Lineas.length === 0) return 'La factura debe tener al menos un producto.';
+  for (const linea of v.Lineas) {
+    if (vacio(linea.ProductoID) || !esEntero(linea.ProductoID)) return 'Cada línea debe tener un producto.';
+    if (!esEntero(linea.Cantidad) || Number(linea.Cantidad) < 1) return 'La cantidad de cada línea debe ser un número entero mayor que cero.';
+    if (!montoValido(linea.PrecioUnitario)) return 'El precio de cada línea debe ser un número mayor o igual a cero.';
+  }
+
+  return '';
+}
+
+// Devuelve el texto sin espacios a los lados, o null si viene vacio
+function textoOpcional(valor) {
+  if (vacio(valor) || String(valor).trim() === '') return null;
+  return String(valor).trim();
+}
+
+// Arma los parametros del SP a partir de los datos del formulario
+function parametrosVenta(v) {
+  // el SP recibe las lineas como texto JSON
+  const lineas = [];
+  for (const linea of v.Lineas) {
+    lineas.push({
+      ProductoID: Number(linea.ProductoID),
+      Cantidad: Number(linea.Cantidad),
+      PrecioUnitario: Number(linea.PrecioUnitario)
+    });
+  }
+
+  return {
+    ClienteID: Number(v.ClienteID),
+    MetodoEntregaID: Number(v.MetodoEntregaID),
+    ContactoID: Number(v.ContactoID),
+    VendedorID: Number(v.VendedorID),
+    Fecha: v.Fecha,
+    NumeroOrdenCliente: textoOpcional(v.NumeroOrdenCliente),
+    InstruccionesEntrega: textoOpcional(v.InstruccionesEntrega),
+    Detalles: JSON.stringify(lineas)
+  };
+}
+
+// POST /api/ventas  (los datos vienen en el cuerpo de la peticion)
+router.post('/', async (req, res) => {
+  const error = validarVenta(req.body);
+  if (error !== '') {
+    return res.status(400).json({ mensaje: error });
+  }
+
+  const filas = await ejecutarSP('dbo.usp_Ventas_Insertar', parametrosVenta(req.body));
+
+  res.status(201).json({ FacturaID: filas[0].FacturaID, mensaje: 'Factura #' + filas[0].FacturaID + ' creada correctamente.' });
+});
+
+// PUT /api/ventas/5
+router.put('/:id', async (req, res) => {
+  if (!esEntero(req.params.id)) {
+    return res.status(400).json({ mensaje: 'El número de factura debe ser un número entero.' });
+  }
+
+  const error = validarVenta(req.body);
+  if (error !== '') {
+    return res.status(400).json({ mensaje: error });
+  }
+
+  const parametros = parametrosVenta(req.body);
+  parametros.FacturaID = Number(req.params.id);
+
+  await ejecutarSP('dbo.usp_Ventas_Actualizar', parametros);
+
+  res.json({ mensaje: 'Factura actualizada correctamente.' });
+});
+
+// DELETE /api/ventas/5
+router.delete('/:id', async (req, res) => {
+  if (!esEntero(req.params.id)) {
+    return res.status(400).json({ mensaje: 'El número de factura debe ser un número entero.' });
+  }
+
+  await ejecutarSP('dbo.usp_Ventas_Eliminar', { FacturaID: Number(req.params.id) });
+
+  res.json({ mensaje: 'Factura eliminada correctamente.' });
 });
 
 module.exports = router;

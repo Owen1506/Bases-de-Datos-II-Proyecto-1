@@ -147,7 +147,7 @@ CREATE OR ALTER PROCEDURE dbo.usp_Clientes_Actualizar
     @ClienteFacturarID INT = NULL,
     @CategoriaID INT,
     @GrupoCompraID INT = NULL,
-    @ContactoPrimarioID INT,
+    @ContactoPrimarioID INT = NULL,
     @ContactoAlternativoID INT = NULL,
     @MetodoEntregaID INT,
     @CiudadEntregaID INT,
@@ -179,6 +179,10 @@ BEGIN
         BEGIN
             THROW 50001, 'El cliente indicado no existe.', 1;
         END;
+
+        -- si no se indica contacto primario, se conserva el que ya tenia
+        IF @ContactoPrimarioID IS NULL
+            SELECT @ContactoPrimarioID = PrimaryContactPersonID FROM syn.Customers WHERE CustomerID = @ClienteID;
 
         -- Formato del sitio web y de los codigos postales (5 digitos, como todos los de la base)
         IF (@SitioWeb NOT LIKE 'http://_%._%' AND @SitioWeb NOT LIKE 'https://_%._%') OR @SitioWeb LIKE '% %'
@@ -259,7 +263,7 @@ CREATE OR ALTER PROCEDURE dbo.usp_Clientes_Insertar
     @ClienteFacturarID INT = NULL,
     @CategoriaID INT,
     @GrupoCompraID INT = NULL,
-    @ContactoPrimarioID INT,
+    @ContactoPrimarioID INT = NULL,
     @ContactoAlternativoID INT = NULL,
     @MetodoEntregaID INT,
     @CiudadEntregaID INT,
@@ -282,6 +286,9 @@ BEGIN
 
     DECLARE @NuevoCliente TABLE (
         ClienteID INT
+    );
+    DECLARE @NuevaPersona TABLE (
+        PersonaID INT
     );
     DECLARE @FacturarA INT;
 
@@ -318,6 +325,29 @@ BEGIN
         SET @FacturarA = @ClienteFacturarID;
         IF @FacturarA IS NULL
             SELECT TOP 1 @FacturarA = CustomerID FROM syn.Customers ORDER BY CustomerID;
+
+        -- Si no se indica contacto primario, el propio cliente es su contacto:
+        -- se crea una persona con su nombre, telefono y fax (como los clientes independientes de la base).
+        -- FullName admite 50 caracteres, por eso se toma el inicio del nombre.
+        IF @ContactoPrimarioID IS NULL
+        BEGIN
+            INSERT INTO syn.People (
+                FullName,
+                PreferredName,
+                IsPermittedToLogon,
+                IsExternalLogonProvider,
+                IsSystemUser,
+                IsEmployee,
+                IsSalesperson,
+                PhoneNumber,
+                FaxNumber,
+                LastEditedBy
+            )
+            OUTPUT INSERTED.PersonID INTO @NuevaPersona
+            VALUES (LEFT(@Nombre, 50), LEFT(@Nombre, 50), 0, 0, 0, 0, 0, @Telefono, @Fax, 1);
+
+            SELECT @ContactoPrimarioID = PersonaID FROM @NuevaPersona;
+        END;
 
         INSERT INTO syn.Customers (
             CustomerName,
